@@ -13,10 +13,6 @@ class SimpleMLP:
         self.W2 = np.random.randn(hidden_size, output_size) * 0.1
         self.b2 = np.zeros(output_size)
 
-    # =========================
-    # FORWARD
-    # =========================
-
     def forward(self, x):
 
         x = np.array(x)
@@ -26,10 +22,6 @@ class SimpleMLP:
         out = np.tanh(np.dot(h, self.W2) + self.b2)
 
         return out
-
-    # =========================
-    # COPY
-    # =========================
 
     def copy(self):
 
@@ -46,10 +38,6 @@ class SimpleMLP:
         clone.b2 = np.copy(self.b2)
 
         return clone
-
-    # =========================
-    # MUTATION
-    # =========================
 
     def mutate(self, rate=0.05):
 
