@@ -110,39 +110,48 @@ class Circuit:
 
         return np.arctan2(dy, dx)
 
-    # =========================
     # IA VISION
-    # =========================
 
-    def get_vision(self, screen, car, size=200, grid_size=20):
+    def raycast(self, car, angle_offset, max_distance=150):
 
-        cell_size = size // grid_size
+        angle = car.angle + angle_offset
+
+        for d in range(max_distance):
+
+            x = car.pos[0] + np.cos(angle) * d
+            y = car.pos[1] + np.sin(angle) * d
+
+            if not self.is_on_track((x, y)):
+                return d / max_distance
+
+        return 1.0
+    
+    def get_vision(self, car):
+
+        angles = [
+            -1.2,
+            -0.6,
+            0,
+            0.6,
+            1.2
+        ]
 
         vision = []
 
-        for gy in range(grid_size):
+        for angle in angles:
 
-            for gx in range(grid_size):
+            dist = self.raycast(car, angle)
 
-                px = int(car.pos[0] - size // 2 + gx * cell_size)
+            vision.append(dist)
 
-                py = int(car.pos[1] - size // 2 + gy * cell_size)
+        # vitesse
+        vision.append(car.speed / 4.0)
 
-                # évite sortie écran
-                px = max(0, min(screen.get_width() - 1, px))
-                py = max(0, min(screen.get_height() - 1, py))
+        # orientation
+        vision.append(np.sin(car.angle))
+        vision.append(np.cos(car.angle))
 
-                color = screen.get_at((px, py))[:3]
-
-                # piste = 1
-                if color == (100, 100, 100):
-                    vision.append(1)
-
-                # mur = 0
-                else:
-                    vision.append(0)
-
-        return vision
+        return np.array(vision)
     
     def get_checkpoint(self, car):
 
@@ -159,34 +168,3 @@ class Circuit:
         )
 
         return checkpoint
-    
-    def draw_vision_grid(self,screen,vision,grid_size,x=10,y=60,cell_size=10):
-
-        for gy in range(grid_size):
-
-            for gx in range(grid_size):
-
-                idx = gy * grid_size + gx
-
-                value = vision[idx]
-
-                if value == 1:
-                    color = (255, 255, 255)
-                else:
-                    color = (0, 0, 0)
-
-                rect = pygame.Rect(
-                    x + gx * cell_size,
-                    y + gy * cell_size,
-                    cell_size,
-                    cell_size
-                )
-
-                pygame.draw.rect(screen, color, rect)
-
-                pygame.draw.rect(
-                    screen,
-                    (60, 60, 60),
-                    rect,
-                    1
-                )
