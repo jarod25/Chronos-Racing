@@ -3,6 +3,7 @@ from car_grid import Car
 from circuit_grid import Circuit
 from ai_grid import SimpleMLP
 from save_manager import save_ai, load_ai
+from sensors_grid import RaySensor
 
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
 
@@ -15,7 +16,7 @@ BORDER_THICKNESS = 4
 CAR_START_X, CAR_START_Y = 400, 170
 
 POP_SIZE = 50
-INPUT_SIZE = 8
+INPUT_SIZE = 24
 FPS = 60
 
 OUTER_COLOR = (0, 0, 0)
@@ -84,6 +85,7 @@ while running:
             running = False
 
     circuit.draw(screen, OUTER_COLOR, TRACK_COLOR, BORDER_COLOR)
+    sensor = RaySensor()
 
     all_dead = True
 
@@ -95,7 +97,14 @@ while running:
         all_dead = False
 
         # RAYCAST INPUT
-        vision = circuit.get_vision(cars[i])
+        vision = sensor.get_distances(circuit, cars[i])
+
+        vision.append(cars[i].speed / 5.0)
+
+        vision.append(np.sin(cars[i].angle))
+        vision.append(np.cos(cars[i].angle))
+
+        vision = np.array(vision)
 
         action = ais[i].forward(vision)
 
@@ -205,6 +214,10 @@ while running:
         start_frame = pygame.time.get_ticks()
 
     # UI
+    best_alive = next((i for i in range(POP_SIZE) if alive[i]), None)
+
+    if best_alive is not None:
+        sensor.draw(screen, circuit, cars[best_alive])
 
     text = font.render(f"Gen: {generation} | Alive: {sum(alive)} | Best: {best_time}",True,(255, 255, 255))
 

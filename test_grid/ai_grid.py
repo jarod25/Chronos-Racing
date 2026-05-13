@@ -3,7 +3,7 @@ import numpy as np
 
 class SimpleMLP:
 
-    def __init__(self, input_size=8, hidden_size=32, output_size=2):
+    def __init__(self, input_size=24, hidden_size=64, output_size=2):
 
         # Couche 1
         self.W1 = np.random.randn(input_size, hidden_size) * 0.01

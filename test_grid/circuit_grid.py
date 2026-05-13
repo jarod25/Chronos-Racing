@@ -109,49 +109,6 @@ class Circuit:
         dy = car.pos[1] - self.cy
 
         return np.arctan2(dy, dx)
-
-    # IA VISION
-
-    def raycast(self, car, angle_offset, max_distance=150):
-
-        angle = car.angle + angle_offset
-
-        for d in range(max_distance):
-
-            x = car.pos[0] + np.cos(angle) * d
-            y = car.pos[1] + np.sin(angle) * d
-
-            if not self.is_on_track((x, y)):
-                return d / max_distance
-
-        return 1.0
-    
-    def get_vision(self, car):
-
-        angles = [
-            -1.2,
-            -0.6,
-            0,
-            0.6,
-            1.2
-        ]
-
-        vision = []
-
-        for angle in angles:
-
-            dist = self.raycast(car, angle)
-
-            vision.append(dist)
-
-        # vitesse
-        vision.append(car.speed / 4.0)
-
-        # orientation
-        vision.append(np.sin(car.angle))
-        vision.append(np.cos(car.angle))
-
-        return np.array(vision)
     
     def get_checkpoint(self, car):
 
