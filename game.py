@@ -3,7 +3,7 @@ import warnings
 
 import pygame
 
-from ai import SimpleAI
+from ai.ai_controller import create_ai_controller
 from car import Car
 from circuit.ellipse_circuit import EllipseCircuit
 from circuit.imported_circuit import ImportedCircuit
@@ -14,7 +14,6 @@ from gui.renderer import draw_game
 from gui.start_selector import choose_start_position, choose_import_start_position
 from sensors.ray_sensor import RaySensor
 
-
 warnings.filterwarnings(
     "ignore",
     message="pkg_resources is deprecated as an API.*",
@@ -23,11 +22,11 @@ warnings.filterwarnings(
 
 
 class ChronosGame:
-    def __init__(self):
+    def __init__(self, ai_name="simple", load_path=None):
         pygame.init()
 
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption("Chronos Racing - V1")
+        pygame.display.set_caption("Chronos Racing - Racing Simulator")
 
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 48)
@@ -45,7 +44,10 @@ class ChronosGame:
             step=RAY_STEP,
         )
 
-        self.ai = SimpleAI(1.8)
+        self.ai_controller = create_ai_controller(
+            ai_name=ai_name,
+            load_path=load_path,
+        )
 
         self.running = True
         self.crashed = False
@@ -125,8 +127,11 @@ class ChronosGame:
         if self.crashed:
             return
 
-        vision = self.sensor.get_distances(self.circuit, self.car)
-        action = self.ai.forward(vision)
+        action = self.ai_controller.get_action(
+            circuit=self.circuit,
+            car=self.car,
+            sensor=self.sensor,
+        )
 
         self.car.update(action)
 

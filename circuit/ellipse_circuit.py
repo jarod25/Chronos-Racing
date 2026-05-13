@@ -15,6 +15,7 @@ class EllipseCircuit:
             border_thickness,
             view_size=(800, 600),
             view_offset=(0, 0),
+            num_checkpoints=200,
     ):
         self.cx = center_x
         self.cy = center_y
@@ -23,6 +24,8 @@ class EllipseCircuit:
         self.height = height
         self.width = width
         self.border_thickness = border_thickness
+
+        self.num_checkpoints = num_checkpoints
 
         self.view_width = view_size[0]
         self.view_height = view_size[1]
@@ -126,7 +129,35 @@ class EllipseCircuit:
             np.sin(car.angle),
         ]
 
-    def draw(self, screen):
+    def get_progress(self, car):
+        dx = car.pos[0] - self.cx
+        dy = car.pos[1] - self.cy
+
+        return np.arctan2(dy, dx)
+
+    def get_checkpoint(self, car):
+        angle = self.get_progress(car)
+
+        angle = (angle + 2 * np.pi) % (2 * np.pi)
+
+        checkpoint = int(
+            angle / (2 * np.pi) * self.num_checkpoints
+        )
+
+        return checkpoint
+
+    def get_checkpoint_delta(self, old_checkpoint, new_checkpoint):
+        delta = new_checkpoint - old_checkpoint
+
+        if delta < -self.num_checkpoints / 2:
+            delta += self.num_checkpoints
+
+        elif delta > self.num_checkpoints / 2:
+            delta -= self.num_checkpoints
+
+        return delta
+
+    def draw(self, screen, draw_checkpoints=False):
         screen.fill(LIGHT_BACKGROUND)
 
         outer_color = (230, 230, 230)
@@ -145,3 +176,27 @@ class EllipseCircuit:
         pygame.draw.ellipse(screen, border_color, self._shift_rect(self.outer_border_rect), self.border_thickness)
         pygame.draw.ellipse(screen, border_color, self._shift_rect(self.inner_rect), self.border_thickness)
         pygame.draw.ellipse(screen, outer_color, self._shift_rect(self.inner_hole_rect))
+
+        if draw_checkpoints:
+            self.draw_checkpoints(screen)
+
+    def draw_checkpoints(self, screen):
+        center_screen = self.track_to_screen((self.cx, self.cy))
+
+        for i in range(self.num_checkpoints):
+            angle = i / self.num_checkpoints * 2 * np.pi
+
+            checkpoint_track = (
+                self.cx + np.cos(angle) * self.outer_a,
+                self.cy + np.sin(angle) * self.outer_b,
+            )
+
+            checkpoint_screen = self.track_to_screen(checkpoint_track)
+
+            pygame.draw.line(
+                screen,
+                (40, 40, 40),
+                (int(center_screen[0]), int(center_screen[1])),
+                (int(checkpoint_screen[0]), int(checkpoint_screen[1])),
+                1,
+            )

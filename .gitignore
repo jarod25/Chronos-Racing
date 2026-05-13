@@ -21,9 +21,11 @@ Thumbs.db
 dist/
 build/
 
-# Ignore local track images
+# Ignore local track images but keep the examples
 assets/tracks/*
-
-# Keep examples
 !assets/tracks/examples/
 !assets/tracks/examples/**
+
+# Ignore saves, but keep the directory
+saves/*
+!saves/.gitkeep

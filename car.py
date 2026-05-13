@@ -7,6 +7,11 @@ class Car:
         self.angle = float(angle)
         self.speed = 2.0
 
+        self.checkpoint = 0
+        self.total_checkpoints = 0
+
+        self.score = 0
+
     def update(self, action):
         steer, throttle = action
 
