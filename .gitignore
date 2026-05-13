@@ -20,3 +20,10 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+# Ignore local track images
+assets/tracks/*
+
+# Keep examples
+!assets/tracks/examples/
+!assets/tracks/examples/**

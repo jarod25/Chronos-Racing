@@ -1,19 +1,19 @@
-import numpy as np
+class SimpleAI:
+    def __init__(self, turn_strength=1.0):
+        self.turn_strength = turn_strength
 
+    def forward(self, vision):
+        middle = len(vision) // 2
 
-class SimpleMLP:
-    def __init__(self, input_size=4, hidden_size=8, output_size=2):
+        left = sum(vision[:middle])
+        right = sum(vision[middle + 1:])
+        front = vision[middle]
 
-        self.W1 = np.random.randn(input_size, hidden_size) * 0.1
-        self.b1 = np.zeros(hidden_size)
+        steer = (right - left) * self.turn_strength
 
-        self.W2 = np.random.randn(hidden_size, output_size) * 0.1
-        self.b2 = np.zeros(output_size)
+        if front < 0.25:
+            steer *= 1.8
 
-    def forward(self, x):
-        x = np.array(x)
+        steer = max(-1, min(1, steer))
 
-        h = np.tanh(np.dot(x, self.W1) + self.b1)
-        out = np.tanh(np.dot(h, self.W2) + self.b2)
-
-        return out
+        return steer, 0

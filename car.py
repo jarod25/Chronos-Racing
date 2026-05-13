@@ -2,9 +2,9 @@ import numpy as np
 
 
 class Car:
-    def __init__(self, x, y):
+    def __init__(self, x, y, angle=0.0):
         self.pos = np.array([x, y], dtype=float)
-        self.angle = 0.0
+        self.angle = float(angle)
         self.speed = 2.0
 
     def update(self, action):
