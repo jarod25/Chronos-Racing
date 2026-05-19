@@ -5,7 +5,7 @@ from gui.colors import BLACK, RED, WHITE
 
 
 def draw_game(screen, circuit, car, crashed, font, sensor=None, draw_rays=False):
-    circuit.draw(screen)
+    circuit.draw(screen, draw_checkpoints=True)
 
     if sensor is not None and draw_rays:
         sensor.draw(screen, circuit, car)
