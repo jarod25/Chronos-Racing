@@ -149,6 +149,7 @@ def choose_import_start_position(screen, clock, circuit):
                         error_message = "Track not detected."
                     else:
                         start_pos = clicked_track_pos
+                        circuit.generate_start_line_from_point(clicked_track_pos)
                         error_message = ""
                 else:
                     if is_direction_far_enough(start_pos, clicked_track_pos):

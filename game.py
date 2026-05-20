@@ -25,7 +25,7 @@ class ChronosGame:
     def __init__(self, ai_name="simple", load_path=None):
         pygame.init()
 
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Chronos Racing - Racing Simulator")
 
         self.clock = pygame.time.Clock()
@@ -33,6 +33,10 @@ class ChronosGame:
 
         self.track_view_size = (TRACK_VIEW_WIDTH, TRACK_VIEW_HEIGHT)
         self.track_view_offset = (TRACK_OFFSET_X, TRACK_OFFSET_Y)
+        self.show_checkpoints = True
+
+        self.button_font = pygame.font.SysFont(None, 28)
+        self.checkpoints_button_rect = pygame.Rect(20, 20, 230, 42)
 
         self.circuit = None
         self.car = None
@@ -123,6 +127,27 @@ class ChronosGame:
             if event.type == pygame.QUIT:
                 self.running = False
 
+            elif event.type == pygame.VIDEORESIZE:
+                self.screen = pygame.display.set_mode(
+                    event.size,
+                    pygame.RESIZABLE,
+                )
+                self.update_layout()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.checkpoints_button_rect.collidepoint(event.pos):
+                    self.show_checkpoints = not self.show_checkpoints
+
+    def update_layout(self):
+        self.track_view_offset = (
+            (self.screen.get_width() - self.track_view_size[0]) // 2,
+            TRACK_OFFSET_Y,
+        )
+
+        if self.circuit is not None:
+            self.circuit.offset_x = self.track_view_offset[0]
+            self.circuit.offset_y = self.track_view_offset[1]
+
     def update(self):
         if self.crashed:
             return
@@ -140,12 +165,17 @@ class ChronosGame:
             print("Collision: car is off track.")
 
     def draw(self):
+        self.update_layout()
+
         draw_game(
             screen=self.screen,
             circuit=self.circuit,
             car=self.car,
             crashed=self.crashed,
             font=self.font,
+            button_font=self.button_font,
+            checkpoints_button_rect=self.checkpoints_button_rect,
+            show_checkpoints=self.show_checkpoints,
             sensor=self.sensor,
             draw_rays=DRAW_RAYS,
         )

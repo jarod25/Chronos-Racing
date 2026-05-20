@@ -10,8 +10,13 @@ def choose_circuit_mode(screen, clock):
     title_font = pygame.font.SysFont(None, 56)
     button_font = pygame.font.SysFont(None, 32)
 
-    default_button = pygame.Rect(300, 250, 400, 60)
-    import_button = pygame.Rect(300, 330, 400, 60)
+    button_width = 400
+    button_height = 60
+
+    button_x = (screen.get_width() - button_width) // 2
+
+    default_button = pygame.Rect(button_x, 250, button_width, button_height)
+    import_button = pygame.Rect(button_x, 330, button_width, button_height)
 
     while True:
         mouse_pos = pygame.mouse.get_pos()
