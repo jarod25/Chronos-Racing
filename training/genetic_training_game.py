@@ -6,7 +6,7 @@ from ai.genetic_ai import GeneticAI
 from car import Car
 from circuit.ellipse_circuit import EllipseCircuit
 from config import *
-from save_manager import save_ai, load_ai
+from save_manager import save_ai, load_ai, replace_best_save
 from sensors.ray_sensor import RaySensor
 
 
@@ -85,6 +85,7 @@ class GeneticTrainingGame:
         self.finished = False
         self.winner_time = None
         self.start_frame = pygame.time.get_ticks()
+        self.simulation_steps = 0
 
         self.running = True
 
@@ -124,7 +125,7 @@ class GeneticTrainingGame:
 
         self.finished = False
         self.winner_time = None
-        self.start_frame = pygame.time.get_ticks()
+        self.simulation_steps = 0
 
     def run(self):
         while self.running:
@@ -152,6 +153,7 @@ class GeneticTrainingGame:
         return np.array(vision)
 
     def update(self):
+        self.simulation_steps += 1
         all_dead = True
 
         for i in range(self.pop_size):
@@ -203,11 +205,11 @@ class GeneticTrainingGame:
 
         if car.total_checkpoints >= self.circuit.num_checkpoints and not self.finished:
             self.finished = True
-            self.winner_time = pygame.time.get_ticks() - self.start_frame
+            self.winner_time = self.simulation_steps / self.fps
 
-            car.score += 10000
+            car.score += 1000
 
-            print(f"LAP COMPLETED! Time: {self.winner_time} ms")
+            print(f"LAP COMPLETED! Time: {self.winner_time:.2f}s")
 
     def next_generation(self):
         print(f"\n=== GENERATION {self.generation} ===")
@@ -222,15 +224,19 @@ class GeneticTrainingGame:
         print("--------------------")
 
         if self.winner_time is not None:
-            winner_time_seconds = self.winner_time / 1000
 
-            if winner_time_seconds < self.best_time:
-                self.best_time = winner_time_seconds
+            if self.winner_time < self.best_time:
+                old_filename = None
+
+                if self.best_time != float("inf"):
+                    old_filename = f"time_{self.best_time:.2f}.npz"
+
+                self.best_time = self.winner_time
                 self.best_ai = self.ais[best_idx].copy()
 
                 print("NEW BEST TIME!")
 
-                save_ai(self.best_ai, f"time_{self.best_time:.2f}.npz")
+                replace_best_save(ai=self.best_ai, new_filename=f"time_{self.best_time:.2f}.npz",old_filename=old_filename)
 
         sorted_idx = np.argsort(scores)[::-1]
 

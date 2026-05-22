@@ -29,3 +29,27 @@ def load_ai(ai_class, filename):
     print(f"[LOAD] AI Loaded : {path}")
 
     return ai
+
+def delete_ai_save(filename):
+    path = os.path.join(SAVE_DIR, filename)
+
+    if not os.path.exists(path):
+        print(f"[DELETE] File not found : {path}")
+        return False
+
+    os.remove(path)
+
+    print(f"[DELETE] AI save deleted : {path}")
+
+    return True
+
+def replace_best_save(ai, new_filename, old_filename=None):
+
+    # Delete previous save
+    if old_filename is not None:
+        delete_ai_save(old_filename)
+
+    # Save new AI
+    save_ai(ai, new_filename)
+
+    return new_filename
