@@ -8,6 +8,10 @@ from circuit.ellipse_circuit import EllipseCircuit
 from config import *
 from save_manager import save_ai, load_ai, replace_best_save
 from sensors.ray_sensor import RaySensor
+from circuit.imported_circuit import ImportedCircuit
+from gui.file_browser import choose_import_image
+from gui.menu import choose_circuit_mode
+from gui.start_selector import (choose_start_position,choose_import_start_position,)
 
 
 def get_config(name, default):
@@ -43,6 +47,7 @@ class GeneticTrainingGame:
 
         self.car_start_x = get_config("CAR_START_X", 400)
         self.car_start_y = get_config("CAR_START_Y", 170)
+        self.car_start_angle = get_config("CAR_START_ANGLE", 0)
 
         self.pop_size = get_config("POP_SIZE", 50)
 
@@ -61,16 +66,7 @@ class GeneticTrainingGame:
 
         self.input_size = self.sensor.ray_count + 3
 
-        self.circuit = EllipseCircuit(
-            center_x=self.track_center_x,
-            center_y=self.track_center_y,
-            length=self.track_length,
-            height=self.track_height,
-            width=self.track_width,
-            border_thickness=self.border_thickness,
-            view_size=self.track_view_size,
-            view_offset=self.track_view_offset,
-        )
+        self.circuit = None
 
         self.best_time = 100.0
         self.best_ai = None
@@ -88,8 +84,71 @@ class GeneticTrainingGame:
         self.simulation_steps = 0
 
         self.running = True
+        self.setup()
 
         self.reset_cars()
+
+    def setup(self):
+        circuit_mode = choose_circuit_mode(self.screen,self.clock)
+
+        if circuit_mode == "default":
+            self.setup_default_circuit()
+
+        elif circuit_mode == "import":
+            self.setup_imported_circuit()
+
+        else:
+            self.quit()
+    def setup_default_circuit(self):
+
+        self.circuit = EllipseCircuit(
+            center_x=self.track_center_x,
+            center_y=self.track_center_y,
+            length=self.track_length,
+            height=self.track_height,
+            width=self.track_width,
+            border_thickness=self.border_thickness,
+            view_size=self.track_view_size,
+            view_offset=self.track_view_offset,
+        )
+
+        start_pos, start_angle = choose_start_position(
+            screen=self.screen,
+            clock=self.clock,
+            circuit=self.circuit,
+            default_pos=(
+                self.car_start_x,
+                self.car_start_y,
+            ),
+        )
+
+        self.car_start_x = start_pos[0]
+        self.car_start_y = start_pos[1]
+
+    def setup_imported_circuit(self):
+        image_path = choose_import_image(
+            self.screen,
+            self.clock,
+        )
+
+        if image_path is None:
+            self.quit()
+
+        self.circuit = ImportedCircuit(
+            image_path=image_path,
+            view_size=self.track_view_size,
+            view_offset=self.track_view_offset,
+        )
+
+        start_pos, start_angle = choose_import_start_position(
+            screen=self.screen,
+            clock=self.clock,
+            circuit=self.circuit,
+        )
+
+        self.car_start_x = start_pos[0]
+        self.car_start_y = start_pos[1]
+        self.car_start_angle = start_angle
 
     def create_population(self):
         if self.load_path is not None:
@@ -112,7 +171,7 @@ class GeneticTrainingGame:
 
     def reset_cars(self):
         self.cars = [
-            Car(self.car_start_x, self.car_start_y)
+            Car(self.car_start_x, self.car_start_y, angle=self.car_start_angle)
             for _ in range(self.pop_size)
         ]
 
@@ -122,6 +181,9 @@ class GeneticTrainingGame:
             car.score = 0
             car.checkpoint = self.circuit.get_checkpoint(car)
             car.total_checkpoints = 0
+            car.last_checkpoint = 0
+            car.lap_completed = False
+            car.progress = 0
 
         self.finished = False
         self.winner_time = None
@@ -155,6 +217,7 @@ class GeneticTrainingGame:
     def update(self):
         self.simulation_steps += 1
         all_dead = True
+        
 
         for i in range(self.pop_size):
             if not self.alive[i]:
@@ -162,9 +225,10 @@ class GeneticTrainingGame:
 
             all_dead = False
 
+            
             car = self.cars[i]
             ai = self.ais[i]
-
+            
             vision = self.build_vision(car)
 
             action = ai.forward(vision)
@@ -184,32 +248,29 @@ class GeneticTrainingGame:
             self.next_generation()
 
     def update_score(self, car):
-        old_checkpoint = car.checkpoint
+
         new_checkpoint = self.circuit.get_checkpoint(car)
 
-        delta = self.circuit.get_checkpoint_delta(
-            old_checkpoint=old_checkpoint,
-            new_checkpoint=new_checkpoint,
-        )
+        # progression normale
+        if new_checkpoint != car.last_checkpoint:
+            car.score += 10
+            car.total_checkpoints += 1
 
-        car.checkpoint = new_checkpoint
+            # détecte progression de tour
+            if car.total_checkpoints > self.circuit.num_checkpoints:
+                car.lap_completed = True
+                self.finished = True
 
-        if delta > 0:
-            car.score += delta * 10
-            car.total_checkpoints += delta
-        else:
-            car.score -= 0.02
+                self.winner_time = self.simulation_steps / self.fps
+                car.score += 1000
 
-        car.score -= 0.001
-        car.score += car.speed * 0.01
+                print(f"LAP COMPLETED! Time: {self.winner_time:.2f}s")
 
-        if car.total_checkpoints >= self.circuit.num_checkpoints and not self.finished:
-            self.finished = True
-            self.winner_time = self.simulation_steps / self.fps
+        car.last_checkpoint = new_checkpoint
 
-            car.score += 1000
-
-            print(f"LAP COMPLETED! Time: {self.winner_time:.2f}s")
+        # rewards classiques
+        car.score -= 0.01
+        car.score += car.speed * 0.02
 
     def next_generation(self):
         print(f"\n=== GENERATION {self.generation} ===")

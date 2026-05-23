@@ -8,14 +8,7 @@ from gui.colors import LIGHT_BACKGROUND
 
 
 class ImportedCircuit(BaseCircuit):
-    def __init__(
-            self,
-            image_path,
-            view_size,
-            view_offset=(0, 0),
-            checkpoint_spacing=10,
-            checkpoint_depth=300,
-    ):
+    def __init__(self,image_path,view_size,view_offset=(0, 0),checkpoint_spacing=8,checkpoint_depth=300):
         super().__init__(
             view_size=view_size,
             view_offset=view_offset,
@@ -28,6 +21,7 @@ class ImportedCircuit(BaseCircuit):
         self.height = self.view_height
 
         self.checkpoint_spacing = checkpoint_spacing
+        self.num_checkpoints = 0
 
         self.color_tolerance = 45
         self.click_search_radius = 10
@@ -61,6 +55,7 @@ class ImportedCircuit(BaseCircuit):
         self.mask_pixel_count = self.track_mask.count()
 
         self.checkpoints = self.generate_checkpoints()
+        self.num_checkpoints = len(self.checkpoints)
 
         print("outline points:", len(self.get_outline_points()))
         print("generated checkpoints:", len(self.checkpoints))
@@ -324,3 +319,25 @@ class ImportedCircuit(BaseCircuit):
             mask_surface,
             (self.offset_x, self.offset_y),
         )
+
+    def get_start_pose(self):
+        if len(self.checkpoints) == 0:
+            return (100, 100), 0
+
+        p1, p2 = self.checkpoints[0]
+
+        # Milieu du checkpoint
+        mx = (p1[0] + p2[0]) / 2
+        my = (p1[1] + p2[1]) / 2
+
+        # Direction du checkpoint
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+
+        # Tangente = perpendiculaire au checkpoint
+        tx = -dy
+        ty = dx
+
+        angle = np.arctan2(ty, tx)
+
+        return (mx, my), angle
