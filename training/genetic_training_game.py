@@ -5,13 +5,13 @@ import pygame
 from ai.genetic_ai import GeneticAI
 from car import Car
 from circuit.ellipse_circuit import EllipseCircuit
-from config import *
-from save_manager import save_ai, load_ai, replace_best_save
-from sensors.ray_sensor import RaySensor
 from circuit.imported_circuit import ImportedCircuit
+from config import *
 from gui.file_browser import choose_import_image
 from gui.menu import choose_circuit_mode
-from gui.start_selector import (choose_start_position,choose_import_start_position,)
+from gui.start_selector import (choose_start_position, choose_import_start_position, )
+from save_manager import load_ai, replace_best_save
+from sensors.ray_sensor import RaySensor
 
 
 def get_config(name, default):
@@ -89,7 +89,7 @@ class GeneticTrainingGame:
         self.reset_cars()
 
     def setup(self):
-        circuit_mode = choose_circuit_mode(self.screen,self.clock)
+        circuit_mode = choose_circuit_mode(self.screen, self.clock)
 
         if circuit_mode == "default":
             self.setup_default_circuit()
@@ -99,6 +99,7 @@ class GeneticTrainingGame:
 
         else:
             self.quit()
+
     def setup_default_circuit(self):
 
         self.circuit = EllipseCircuit(
@@ -208,7 +209,7 @@ class GeneticTrainingGame:
     def build_vision(self, car):
         vision = self.sensor.get_distances(self.circuit, car)
 
-        vision.append(car.speed / 5.0)
+        vision.append(car.speed_kmh / car.max_speed_kmh)
         vision.append(np.sin(car.angle))
         vision.append(np.cos(car.angle))
 
@@ -217,7 +218,6 @@ class GeneticTrainingGame:
     def update(self):
         self.simulation_steps += 1
         all_dead = True
-        
 
         for i in range(self.pop_size):
             if not self.alive[i]:
@@ -225,10 +225,9 @@ class GeneticTrainingGame:
 
             all_dead = False
 
-            
             car = self.cars[i]
             ai = self.ais[i]
-            
+
             vision = self.build_vision(car)
 
             action = ai.forward(vision)
@@ -270,7 +269,7 @@ class GeneticTrainingGame:
 
         # rewards classiques
         car.score -= 0.01
-        car.score += car.speed * 0.02
+        car.score += (car.speed_kmh / car.max_speed_kmh) * 0.6
 
     def next_generation(self):
         print(f"\n=== GENERATION {self.generation} ===")
@@ -297,7 +296,8 @@ class GeneticTrainingGame:
 
                 print("NEW BEST TIME!")
 
-                replace_best_save(ai=self.best_ai, new_filename=f"time_{self.best_time:.2f}.npz",old_filename=old_filename)
+                replace_best_save(ai=self.best_ai, new_filename=f"time_{self.best_time:.2f}.npz",
+                                  old_filename=old_filename)
 
         sorted_idx = np.argsort(scores)[::-1]
 

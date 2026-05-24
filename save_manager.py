@@ -30,6 +30,7 @@ def load_ai(ai_class, filename):
 
     return ai
 
+
 def delete_ai_save(filename):
     path = os.path.join(SAVE_DIR, filename)
 
@@ -43,8 +44,8 @@ def delete_ai_save(filename):
 
     return True
 
-def replace_best_save(ai, new_filename, old_filename=None):
 
+def replace_best_save(ai, new_filename, old_filename=None):
     # Delete previous save
     if old_filename is not None:
         delete_ai_save(old_filename)

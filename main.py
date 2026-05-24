@@ -23,7 +23,7 @@ def main():
 
     parser.add_argument(
         "--ai",
-        choices=["simple", "genetic"],
+        choices=["simple", "physics", "genetic"],
         default="simple",
         help="AI used in play mode.",
     )

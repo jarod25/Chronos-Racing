@@ -1,3 +1,6 @@
+import json
+import os
+import re
 import sys
 import warnings
 
@@ -41,6 +44,7 @@ class ChronosGame:
         self.circuit = None
         self.car = None
 
+        self.ai_name = ai_name
         self.sensor = RaySensor(
             ray_count=RAY_COUNT,
             fov=RAY_FOV,
@@ -56,6 +60,17 @@ class ChronosGame:
         self.running = True
         self.crashed = False
 
+        self.start_pos = None
+        self.finish_radius = 50.0
+        self.has_left_start_zone = False
+        self.was_in_start_zone = True
+        self.generation = 1
+        self.lap_start_time = 0.0
+        self.current_lap_time = 0.0
+        self.best_lap_time = None
+        self.best_save_path = None
+        self.min_valid_lap_time = 2.0
+
     def setup(self):
         circuit_mode = choose_circuit_mode(self.screen, self.clock)
 
@@ -67,6 +82,9 @@ class ChronosGame:
 
         else:
             self.quit()
+
+        self.start_pos = self.car.pos.copy()
+        self.lap_start_time = pygame.time.get_ticks() / 1000.0
 
     def setup_default_circuit(self):
         self.circuit = EllipseCircuit(
@@ -108,6 +126,88 @@ class ChronosGame:
         )
 
         self.car = Car(start_pos[0], start_pos[1], angle=start_angle)
+
+    @staticmethod
+    def _sanitize_filename(value):
+        value = str(value).strip().lower()
+        value = re.sub(r"[^a-z0-9._-]+", "_", value)
+        return value.strip("_") or "unknown"
+
+    def _circuit_name(self):
+        for attr in ("name", "circuit_name", "filename", "track_name"):
+            if hasattr(self.circuit, attr):
+                v = getattr(self.circuit, attr)
+                if v:
+                    return self._sanitize_filename(os.path.basename(str(v)))
+        if isinstance(self.circuit, EllipseCircuit):
+            return "ellipse"
+        if isinstance(self.circuit, ImportedCircuit):
+            return "imported"
+        return "unknown_circuit"
+
+    def _save_best_if_needed(self, lap_time):
+        if self.ai_name not in ("physics", "heuristic"):
+            return
+        if self.best_lap_time is not None and lap_time >= self.best_lap_time:
+            return
+
+        self.best_lap_time = lap_time
+        os.makedirs("saves", exist_ok=True)
+
+        if hasattr(self.ai_controller, "ai") and hasattr(self.ai_controller.ai, "sector_memory"):
+            sector_memory = self.ai_controller.ai.sector_memory
+        elif hasattr(self.ai_controller, "sector_memory"):
+            sector_memory = self.ai_controller.sector_memory
+        else:
+            sector_memory = {}
+
+        serial_memory = {str(k): v for k, v in sector_memory.items()}
+        circuit_name = self._circuit_name()
+        ai_label = "physics"
+        filename = f"{ai_label}_{circuit_name}_{lap_time:.2f}.json"
+        path = os.path.join("saves", filename)
+
+        if self.best_save_path is not None and self.best_save_path != path and os.path.exists(self.best_save_path):
+            os.remove(self.best_save_path)
+
+        payload = {
+            "ai_name": ai_label,
+            "circuit_name": circuit_name,
+            "best_lap_time": round(lap_time, 4),
+            "generation": self.generation,
+            "sector_memory": serial_memory,
+        }
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+
+        self.best_save_path = path
+
+    def _update_lap_logic(self):
+        now = pygame.time.get_ticks() / 1000.0
+        self.current_lap_time = now - self.lap_start_time
+
+        if self.start_pos is None:
+            return
+
+        distance_to_start = np.linalg.norm(self.car.pos - self.start_pos)
+        in_start_zone = distance_to_start < self.finish_radius
+
+        if not in_start_zone:
+            self.has_left_start_zone = True
+
+        just_entered_zone = in_start_zone and not self.was_in_start_zone
+
+        if just_entered_zone and self.has_left_start_zone:
+            lap_time = self.current_lap_time
+            if lap_time >= self.min_valid_lap_time:
+                self.generation += 1
+                self._save_best_if_needed(lap_time)
+                self.lap_start_time = now
+                self.current_lap_time = 0.0
+            self.has_left_start_zone = False
+
+        self.was_in_start_zone = in_start_zone
 
     def run(self):
         self.setup()
@@ -159,13 +259,23 @@ class ChronosGame:
         )
 
         self.car.update(action)
+        self._update_lap_logic()
 
         if not self.circuit.is_on_track(self.car.pos):
             self.crashed = True
             print("Collision: car is off track.")
 
+    def _physics_hud_line(self):
+        best = "---" if self.best_lap_time is None else f"{self.best_lap_time:.2f}s"
+        speed = int(round(getattr(self.car, "speed_kmh", 0.0)))
+        return f"AI: physics | Gen: {self.generation} | Lap: {self.current_lap_time:.2f}s | Best: {best} | Speed: {speed} km/h"
+
     def draw(self):
         self.update_layout()
+
+        hud_text = None
+        if self.ai_name in "physics":
+            hud_text = self._physics_hud_line()
 
         draw_game(
             screen=self.screen,
@@ -178,6 +288,7 @@ class ChronosGame:
             show_checkpoints=self.show_checkpoints,
             sensor=self.sensor,
             draw_rays=DRAW_RAYS,
+            hud_text=hud_text,
         )
 
     def quit(self):

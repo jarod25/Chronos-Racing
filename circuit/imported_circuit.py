@@ -8,7 +8,7 @@ from gui.colors import LIGHT_BACKGROUND
 
 
 class ImportedCircuit(BaseCircuit):
-    def __init__(self,image_path,view_size,view_offset=(0, 0),checkpoint_spacing=8,checkpoint_depth=300):
+    def __init__(self, image_path, view_size, view_offset=(0, 0), checkpoint_spacing=8, checkpoint_depth=300):
         super().__init__(
             view_size=view_size,
             view_offset=view_offset,

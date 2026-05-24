@@ -1,7 +1,7 @@
 import pygame
 
-from gui.components import draw_button
 from gui.colors import BLACK, RED, WHITE
+from gui.components import draw_button
 
 
 def draw_game(
@@ -15,6 +15,7 @@ def draw_game(
         show_checkpoints,
         sensor=None,
         draw_rays=False,
+        hud_text=None,
 ):
     circuit.draw(screen, draw_checkpoints=show_checkpoints)
 
@@ -28,6 +29,9 @@ def draw_game(
         button_rect=checkpoints_button_rect,
         show_checkpoints=show_checkpoints,
     )
+
+    if hud_text:
+        draw_hud_text(screen, hud_text)
 
     if crashed:
         draw_crash_text(screen, font)
@@ -49,6 +53,15 @@ def draw_car(screen, circuit, car):
         (int(car_screen_pos[0]), int(car_screen_pos[1])),
         6,
     )
+
+
+def draw_hud_text(screen, text_value):
+    font = pygame.font.SysFont(None, 28)
+    margin = 12
+    text = font.render(text_value, True, BLACK)
+    rect = text.get_rect()
+    rect.topright = (screen.get_width() - margin, margin)
+    screen.blit(text, rect)
 
 
 def draw_crash_text(screen, font):
