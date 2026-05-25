@@ -1,6 +1,7 @@
 import sys
 
 import pygame
+import os
 
 from ai.genetic_ai import GeneticAI
 from car import Car
@@ -49,7 +50,7 @@ class GeneticTrainingGame:
         self.car_start_y = get_config("CAR_START_Y", 170)
         self.car_start_angle = get_config("CAR_START_ANGLE", 0)
 
-        self.pop_size = get_config("POP_SIZE", 50)
+        self.pop_size = get_config("POP_SIZE", 20)
 
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Chronos Racing - Genetic AI Training")
@@ -67,6 +68,10 @@ class GeneticTrainingGame:
         self.input_size = self.sensor.ray_count + 3
 
         self.circuit = None
+
+        self.is_generalist_run = (load_path == "generalist.npz")
+        self.current_save_name = load_path
+        self.circuit_name = None
 
         self.best_time = 100.0
         self.best_ai = None
@@ -123,8 +128,10 @@ class GeneticTrainingGame:
             ),
         )
 
+        self.circuit_name = "ellipse"
         self.car_start_x = start_pos[0]
         self.car_start_y = start_pos[1]
+        self.car_start_angle = start_angle
 
     def setup_imported_circuit(self):
         image_path = choose_import_image(
@@ -147,6 +154,8 @@ class GeneticTrainingGame:
             circuit=self.circuit,
         )
 
+        self.circuit_name = os.path.splitext(os.path.basename(image_path))[0]
+
         self.car_start_x = start_pos[0]
         self.car_start_y = start_pos[1]
         self.car_start_angle = start_angle
@@ -157,6 +166,9 @@ class GeneticTrainingGame:
 
             base_ai = load_ai(GeneticAI, self.load_path)
             ais = [base_ai.copy() for _ in range(self.pop_size)]
+
+            # detect mode
+            self.is_generalist_run = (self.load_path == "generalist.npz")
 
             for i in range(1, self.pop_size):
                 ais[i].mutate(rate=0.02)
@@ -179,6 +191,7 @@ class GeneticTrainingGame:
         self.alive = [True] * self.pop_size
 
         for car in self.cars:
+            car.speed_kmh = 350.0
             car.score = 0
             car.checkpoint = self.circuit.get_checkpoint(car)
             car.total_checkpoints = 0
@@ -239,6 +252,24 @@ class GeneticTrainingGame:
 
             self.update_score(car)
 
+            total = self.circuit.num_checkpoints
+
+            if total > 0:
+
+                prev = car.last_checkpoint
+                new_checkpoint = self.circuit.get_checkpoint(car)
+
+                forward = (new_checkpoint - prev) % total
+                backward = (prev - new_checkpoint) % total
+
+                if backward < forward and backward > 0:
+                    self.alive[i] = False
+                    car.score -= 100
+
+            if car.speed_kmh < 20:
+                car.score -= 100
+                self.alive[i] = False
+
             if not self.circuit.is_on_track(car.pos):
                 car.score -= 100
                 self.alive[i] = False
@@ -252,7 +283,7 @@ class GeneticTrainingGame:
 
         # progression normale
         if new_checkpoint != car.last_checkpoint:
-            car.score += 10
+            car.score += 20
             car.total_checkpoints += 1
 
             # détecte progression de tour
@@ -261,7 +292,10 @@ class GeneticTrainingGame:
                 self.finished = True
 
                 self.winner_time = self.simulation_steps / self.fps
-                car.score += 1000
+                car.score += 10000
+
+                if self.winner_time < self.best_time:
+                    car.score += 10000
 
                 print(f"LAP COMPLETED! Time: {self.winner_time:.2f}s")
 
@@ -269,7 +303,7 @@ class GeneticTrainingGame:
 
         # rewards classiques
         car.score -= 0.01
-        car.score += (car.speed_kmh / car.max_speed_kmh) * 0.6
+        car.score += (car.speed_kmh / car.max_speed_kmh) * 50
 
     def next_generation(self):
         print(f"\n=== GENERATION {self.generation} ===")
@@ -286,18 +320,19 @@ class GeneticTrainingGame:
         if self.winner_time is not None:
 
             if self.winner_time < self.best_time:
-                old_filename = None
-
-                if self.best_time != float("inf"):
-                    old_filename = f"time_{self.best_time:.2f}.npz"
 
                 self.best_time = self.winner_time
                 self.best_ai = self.ais[best_idx].copy()
 
                 print("NEW BEST TIME!")
 
-                replace_best_save(ai=self.best_ai, new_filename=f"time_{self.best_time:.2f}.npz",
-                                  old_filename=old_filename)
+                # SAVE CIRCUIT-SPECIFIC
+                circuit_save = f"{self.circuit_name}_{self.best_time:.2f}_genetic.npz"
+                replace_best_save(ai=self.best_ai, new_filename=circuit_save)
+
+                # SAVE GENERALIST
+                if self.is_generalist_run:
+                    replace_best_save(ai=self.best_ai, new_filename="generalist.npz")
 
         sorted_idx = np.argsort(scores)[::-1]
 

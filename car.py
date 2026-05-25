@@ -15,7 +15,7 @@ class Car:
         self.pos = np.array([x, y], dtype=float)
         self.angle = float(angle)
 
-        self.speed_kmh = 0.0
+        self.speed_kmh = 0
         self.max_speed_kmh = float(max_speed_kmh)
         self.acceleration_power_kmh_s = float(acceleration_power_kmh_s)
         self.brake_power_kmh_s = float(brake_power_kmh_s)
