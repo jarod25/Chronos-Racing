@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 
-from gui.colors import RED, WHITE
+from gui.colors import BLACK, RED, WHITE
 
 
 class BaseCircuit:
@@ -155,11 +155,11 @@ class BaseCircuit:
 
         return checkpoints
 
-    def get_checkpoint(self, car):
+    def get_checkpoint_at_pos(self, pos):
         if len(self.checkpoints) == 0:
             return 0
 
-        car_pos = np.array(car.pos)
+        car_pos = np.array(pos)
 
         best_index = 0
         best_distance = float("inf")
@@ -180,6 +180,46 @@ class BaseCircuit:
 
         return best_index
 
+    def get_checkpoint(self, car):
+        return self.get_checkpoint_at_pos(car.pos)
+
+    def get_checkpoint_midpoint(self, checkpoint_index):
+        checkpoint_count = len(self.checkpoints)
+
+        if checkpoint_count == 0:
+            return None
+
+        p1, p2 = self.checkpoints[checkpoint_index % checkpoint_count]
+
+        return np.array([
+            (p1[0] + p2[0]) / 2,
+            (p1[1] + p2[1]) / 2,
+        ], dtype=float)
+
+    def get_checkpoint_forward_vector(self, checkpoint_index, expected_direction=1):
+        checkpoint_count = len(self.checkpoints)
+
+        if checkpoint_count == 0:
+            return None
+
+        current_idx = checkpoint_index % checkpoint_count
+        step = 1 if expected_direction >= 0 else -1
+        next_idx = (current_idx + step) % checkpoint_count
+
+        current_midpoint = self.get_checkpoint_midpoint(current_idx)
+        next_midpoint = self.get_checkpoint_midpoint(next_idx)
+
+        if current_midpoint is None or next_midpoint is None:
+            return None
+
+        vector = next_midpoint - current_midpoint
+        norm = np.linalg.norm(vector)
+
+        if norm == 0:
+            return None
+
+        return vector / norm
+
     def get_checkpoint_delta(self, old_checkpoint, new_checkpoint):
         checkpoint_count = len(self.checkpoints)
 
@@ -195,6 +235,25 @@ class BaseCircuit:
             delta -= checkpoint_count
 
         return delta
+
+    def get_checkpoint_direction_from_angle(self, start_pos, start_angle):
+        start_checkpoint = self.get_checkpoint_at_pos(start_pos)
+        direction = np.array([
+            np.cos(start_angle),
+            np.sin(start_angle),
+        ])
+
+        for distance in (20, 40, 80):
+            ahead_pos = np.array(start_pos) + direction * distance
+            ahead_checkpoint = self.get_checkpoint_at_pos(ahead_pos)
+            delta = self.get_checkpoint_delta(start_checkpoint, ahead_checkpoint)
+
+            if delta > 0:
+                return 1
+            if delta < 0:
+                return -1
+
+        return 1
 
     def generate_start_line_from_point(self, pos):
         self.start_line = None
@@ -219,6 +278,47 @@ class BaseCircuit:
         )
 
         self.start_line = self.create_perpendicular_track_line(outline, closest_index)
+
+    def has_crossed_start_line(self, previous_pos, current_pos):
+        if self.start_line is None:
+            return False
+
+        def orientation(a, b, c):
+            return (
+                    (b[0] - a[0]) * (c[1] - a[1])
+                    - (b[1] - a[1]) * (c[0] - a[0])
+            )
+
+        def on_segment(a, b, c):
+            return (
+                    min(a[0], c[0]) <= b[0] <= max(a[0], c[0])
+                    and min(a[1], c[1]) <= b[1] <= max(a[1], c[1])
+            )
+
+        a1 = np.array(previous_pos, dtype=float)
+        a2 = np.array(current_pos, dtype=float)
+        b1 = np.array(self.start_line[0], dtype=float)
+        b2 = np.array(self.start_line[1], dtype=float)
+
+        o1 = orientation(a1, a2, b1)
+        o2 = orientation(a1, a2, b2)
+        o3 = orientation(b1, b2, a1)
+        o4 = orientation(b1, b2, a2)
+        epsilon = 1e-9
+
+        if o1 * o2 < 0 and o3 * o4 < 0:
+            return True
+
+        if abs(o1) <= epsilon and on_segment(a1, b1, a2):
+            return True
+        if abs(o2) <= epsilon and on_segment(a1, b2, a2):
+            return True
+        if abs(o3) <= epsilon and on_segment(b1, a1, b2):
+            return True
+        if abs(o4) <= epsilon and on_segment(b1, a2, b2):
+            return True
+
+        return False
 
     def draw_start_line(self, screen):
         if self.start_line is None:

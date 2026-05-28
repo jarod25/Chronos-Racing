@@ -17,12 +17,12 @@ class LaunchSelection:
 
 PLAY_AI_OPTIONS = [
     ("simple", "Simple AI"),
-    ("physic", "Physics AI"),
+    ("physics", "Physics AI"),
     ("genetic", "Genetic AI"),
 ]
 
 TRAIN_AI_OPTIONS = [
-    ("physic", "Physics AI"),
+    ("physics", "Physics AI"),
     ("genetic", "Genetic AI"),
 ]
 

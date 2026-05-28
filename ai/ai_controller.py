@@ -12,8 +12,11 @@ class SimpleAIController:
 
     def get_action(self, circuit, car, sensor):
         vision = sensor.get_distances(circuit, car)
-        steering, _ = self.ai.forward(vision)
-        return {"throttle": 0.0, "brake": 0.0, "steering": steering}
+        return self.ai.forward(
+            vision,
+            speed_kmh=car.speed_kmh,
+            max_speed_kmh=car.max_speed_kmh,
+        )
 
 
 class PhysicsAIController:
@@ -32,11 +35,12 @@ class PhysicsAIController:
 
 
 class GeneticAIController:
-    def __init__(self, load_path):
+    def __init__(self, load_path=None):
         if load_path is None:
-            raise ValueError("Une IA génétique doit être chargée avec --load.")
-
-        self.ai = load_ai(GeneticAI, load_path)
+            self.ai = GeneticAI()
+            print("Fresh Genetic AI created. It is untrained.")
+        else:
+            self.ai = load_ai(GeneticAI, load_path)
 
     def get_action(self, circuit, car, sensor):
         vision = sensor.get_distances(circuit, car)
@@ -46,20 +50,8 @@ class GeneticAIController:
         vision.append(np.cos(car.angle))
 
         vision = np.array(vision)
-        acceleration, steering = self.ai.forward(vision)
-
-        if acceleration >= 0:
-            throttle = acceleration
-            brake = 0.0
-        else:
-            throttle = 0.0
-            brake = -acceleration
-
-        return {
-            "throttle": float(np.clip(throttle, 0.0, 1.0)),
-            "brake": float(np.clip(brake, 0.0, 1.0)),
-            "steering": float(np.clip(steering, -1.0, 1.0)),
-        }
+        output = self.ai.forward(vision)
+        return GeneticAI.to_car_action(output)
 
 
 def create_ai_controller(ai_name, load_path=None):

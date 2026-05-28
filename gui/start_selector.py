@@ -88,6 +88,7 @@ def choose_start_position(screen, clock, circuit, default_pos=None):
                 if start_pos is None:
                     if circuit.is_on_track(clicked_track_pos):
                         start_pos = clicked_track_pos
+                        circuit.generate_start_line_from_point(start_pos)
                         error_message = ""
                     else:
                         error_message = "Not on track."

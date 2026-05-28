@@ -22,19 +22,21 @@ class GeneticTrainingGame(TrainingGame):
         vision.append(car.speed_kmh / car.max_speed_kmh)
         vision.append(np.sin(car.angle))
         vision.append(np.cos(car.angle))
-        action = ai.forward(np.array(vision))
-        action += np.random.randn(2) * 0.02
-        action = np.clip(action, -1, 1)
-        return action
+        output = ai.forward(np.array(vision))
+        output = output + np.random.randn(output.shape[0]) * 0.02
+        output = np.clip(output, -1, 1)
+        return GeneticAI.to_car_action(output)
 
     def on_new_best(self, best_ai):
-        replace_best_save(
+        new_filename = replace_best_save(
             ai=best_ai,
             ai_name=self.ai_name,
             circuit_name=self.circuit_name,
             time_s=self.best_time,
             extension="npz",
+            old_filename=self.best_save_filename,
         )
+        self.best_save_filename = new_filename
 
     def evolve(self, scores):
         sorted_idx = np.argsort(scores)[::-1]

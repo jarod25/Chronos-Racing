@@ -1,7 +1,5 @@
 import warnings
 
-from training.physics_training_game import PhysicsTrainingGame
-
 warnings.filterwarnings(
     "ignore",
     message="pkg_resources is deprecated as an API.*",
@@ -14,6 +12,7 @@ from config import WINDOW_HEIGHT, WINDOW_WIDTH
 from game import ChronosGame
 from gui.launch_menu import choose_launch_selection
 from training.genetic_training_game import GeneticTrainingGame
+from training.physics_training_game import PhysicsTrainingGame
 
 
 def main():
@@ -25,7 +24,7 @@ def main():
     launch_selection = choose_launch_selection(screen, clock)
 
     if launch_selection.mode == "train":
-        if launch_selection.ai_name == "physics":
+        if launch_selection.ai_name in "physics":
             game = PhysicsTrainingGame(
                 screen=screen,
                 ai_name=launch_selection.ai_name,

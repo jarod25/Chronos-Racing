@@ -1,7 +1,8 @@
 import json
+import os
 
 from ai.heuristic_physics_ai import HeuristicPhysicsAI
-from save_manager import build_save_filename, SAVE_DIR
+from save_manager import build_save_filename, delete_ai_save, SAVE_DIR
 from training.training_game import TrainingGame
 
 
@@ -11,7 +12,8 @@ class PhysicsTrainingGame(TrainingGame):
         self.pop_size = 1
         ai = HeuristicPhysicsAI()
         if self.load_path is not None and self.load_path.endswith('.json'):
-            with open(f"saves/{self.load_path}", "r", encoding="utf-8") as f:
+            load_path = self.load_path if os.path.isabs(self.load_path) else os.path.join(SAVE_DIR, self.load_path)
+            with open(load_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             memory = data.get("sector_memory", {})
             ai.sector_memory = {int(k) if str(k).isdigit() else k: v for k, v in memory.items()}
@@ -29,11 +31,16 @@ class PhysicsTrainingGame(TrainingGame):
 
     def on_new_best(self, best_ai):
         filename = build_save_filename(self.ai_name, self.circuit_name, self.best_time, extension="json")
-        payload = {"ai_name": self.ai_name, "circuit_name": self.circuit_name, "best_lap_time": round(self.best_time, 4), "sector_memory": {str(k): v for k, v in best_ai.sector_memory.items()}}
-        import os
+        if self.best_save_filename is not None and self.best_save_filename != filename:
+            delete_ai_save(self.best_save_filename)
+        payload = {"ai_name": self.ai_name, "circuit_name": self.circuit_name,
+                   "best_lap_time": round(self.best_time, 4),
+                   "sector_memory": {str(k): v for k, v in best_ai.sector_memory.items()}}
+
         os.makedirs(SAVE_DIR, exist_ok=True)
         with open(os.path.join(SAVE_DIR, filename), "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
+        self.best_save_filename = filename
 
     def evolve(self, scores):
         return None

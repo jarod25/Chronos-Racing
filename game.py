@@ -2,7 +2,6 @@ import json
 import os
 import re
 import sys
-import warnings
 
 import pygame
 
@@ -16,12 +15,6 @@ from gui.menu import choose_circuit_mode
 from gui.renderer import draw_game
 from gui.start_selector import choose_start_position, choose_import_start_position
 from sensors.ray_sensor import RaySensor
-
-warnings.filterwarnings(
-    "ignore",
-    message="pkg_resources is deprecated as an API.*",
-    category=UserWarning,
-)
 
 
 class ChronosGame:
@@ -64,6 +57,7 @@ class ChronosGame:
         self.crashed = False
 
         self.start_pos = None
+        self.start_angle = 0.0
         self.finish_radius = 50.0
         self.has_left_start_zone = False
         self.was_in_start_zone = True
@@ -108,7 +102,9 @@ class ChronosGame:
             default_pos=(CAR_START_X, CAR_START_Y),
         )
 
+        self.circuit.generate_start_line_from_point(start_pos)
         self.car = Car(start_pos[0], start_pos[1], angle=start_angle)
+        self.start_angle = start_angle
 
     def setup_imported_circuit(self):
         image_path = choose_import_image(self.screen, self.clock)
@@ -129,6 +125,7 @@ class ChronosGame:
         )
 
         self.car = Car(start_pos[0], start_pos[1], angle=start_angle)
+        self.start_angle = start_angle
 
     @staticmethod
     def _sanitize_filename(value):
@@ -240,6 +237,20 @@ class ChronosGame:
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.checkpoints_button_rect.collidepoint(event.pos):
                     self.show_checkpoints = not self.show_checkpoints
+
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self.reset_car()
+
+    def reset_car(self):
+        self.car.pos = self.start_pos.copy()
+        self.car.prev_pos = self.start_pos.copy()
+        self.car.angle = float(self.start_angle)
+        self.car.speed_kmh = 0.0
+        self.crashed = False
+        self.has_left_start_zone = False
+        self.was_in_start_zone = True
+        self.lap_start_time = pygame.time.get_ticks() / 1000.0
+        self.current_lap_time = 0.0
 
     def update_layout(self):
         self.track_view_offset = (

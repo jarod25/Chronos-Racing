@@ -3,7 +3,7 @@ import numpy as np
 
 class GeneticAI:
 
-    def __init__(self, input_size=24, hidden_size=64, output_size=2):
+    def __init__(self, input_size=24, hidden_size=64, output_size=3):
         # Couche 1
         self.W1 = np.random.randn(input_size, hidden_size) * 0.01
         self.b1 = np.zeros(hidden_size)
@@ -11,6 +11,10 @@ class GeneticAI:
         # Couche 2
         self.W2 = np.random.randn(hidden_size, output_size) * 0.1
         self.b2 = np.zeros(output_size)
+        if output_size == 3:
+            self.b2[0] = 0.4
+            self.b2[1] = -0.4
+            self.b2[2] = 0.0
 
     def forward(self, x):
         x = np.array(x)
@@ -42,3 +46,32 @@ class GeneticAI:
 
         self.W2 += np.random.randn(*self.W2.shape) * rate
         self.b2 += np.random.randn(*self.b2.shape) * rate
+
+    @staticmethod
+    def to_car_action(output):
+        output = np.array(output, dtype=float)
+        if output.shape[0] == 3:
+            raw_throttle, raw_brake, raw_steering = output
+            throttle = (raw_throttle + 1.0) / 2.0
+            brake = (raw_brake + 1.0) / 2.0
+            steering = raw_steering
+            if throttle >= brake:
+                brake = 0.0
+            else:
+                throttle = 0.0
+        elif output.shape[0] == 2:
+            acceleration, steering = output
+            if acceleration >= 0:
+                throttle = acceleration
+                brake = 0.0
+            else:
+                throttle = 0.0
+                brake = -acceleration
+        else:
+            raise ValueError(f"Unsupported genetic output size: {output.shape[0]}")
+
+        return {
+            "throttle": float(np.clip(throttle, 0.0, 1.0)),
+            "brake": float(np.clip(brake, 0.0, 1.0)),
+            "steering": float(np.clip(steering, -1.0, 1.0)),
+        }

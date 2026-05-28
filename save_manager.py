@@ -32,7 +32,8 @@ def build_save_filename(ai_name, circuit_name, time_s, extension="npz"):
 
 def save_ai(ai, filename):
     os.makedirs(SAVE_DIR, exist_ok=True)
-    path = os.path.join(SAVE_DIR, filename)
+    safe_filename = os.path.basename(filename)
+    path = os.path.join(SAVE_DIR, safe_filename)
 
     np.savez(path, W1=ai.W1, b1=ai.b1, W2=ai.W2, b2=ai.b2)
 
@@ -40,7 +41,7 @@ def save_ai(ai, filename):
 
 
 def load_ai(ai_class, filename):
-    path = os.path.join(SAVE_DIR, filename)
+    path = filename if os.path.isabs(filename) else os.path.join(SAVE_DIR, filename)
 
     data = np.load(path)
 
@@ -58,7 +59,8 @@ def load_ai(ai_class, filename):
 
 
 def delete_ai_save(filename):
-    path = os.path.join(SAVE_DIR, filename)
+    safe_filename = os.path.basename(filename)
+    path = os.path.join(SAVE_DIR, safe_filename)
 
     if not os.path.exists(path):
         print(f"[DELETE] File not found : {path}")
@@ -92,8 +94,9 @@ def replace_best_save(
             extension=extension,
         )
 
-    if old_filename is not None and old_filename != new_filename:
-        delete_ai_save(old_filename)
+    old_safe_filename = os.path.basename(old_filename) if old_filename is not None else None
+    if old_safe_filename is not None and old_safe_filename != new_filename:
+        delete_ai_save(old_safe_filename)
 
     save_ai(ai, new_filename)
 
