@@ -74,13 +74,13 @@ def delete_ai_save(filename):
 
 
 def replace_best_save(
-    ai,
-    ai_name=None,
-    circuit_name=None,
-    time_s=None,
-    extension="npz",
-    old_filename=None,
-    new_filename=None,
+        ai,
+        ai_name=None,
+        circuit_name=None,
+        time_s=None,
+        extension="npz",
+        old_filename=None,
+        new_filename=None,
 ):
     if new_filename is None:
         if ai_name is None or circuit_name is None or time_s is None:

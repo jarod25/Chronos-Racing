@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 
-from gui.colors import BLACK, RED, WHITE
+from gui.colors import RED, WHITE
 
 
 class BaseCircuit:

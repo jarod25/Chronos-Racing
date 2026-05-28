@@ -123,7 +123,8 @@ class TrainingGame:
             view_size=self.track_view_size,
             view_offset=self.track_view_offset,
         )
-        start_pos, start_angle = choose_start_position(self.screen, self.clock, self.circuit, (self.car_start_x, self.car_start_y))
+        start_pos, start_angle = choose_start_position(self.screen, self.clock, self.circuit,
+                                                       (self.car_start_x, self.car_start_y))
         self.circuit.generate_start_line_from_point(start_pos)
         self.expected_checkpoint_direction = self.circuit.get_checkpoint_direction_from_angle(start_pos, start_angle)
         self.circuit_name = "ellipse"
@@ -134,7 +135,8 @@ class TrainingGame:
         image_path = choose_import_image(self.screen, self.clock)
         if image_path is None:
             self.quit()
-        self.circuit = ImportedCircuit(image_path=image_path, view_size=self.track_view_size, view_offset=self.track_view_offset)
+        self.circuit = ImportedCircuit(image_path=image_path, view_size=self.track_view_size,
+                                       view_offset=self.track_view_offset)
         start_pos, start_angle = choose_import_start_position(self.screen, self.clock, self.circuit)
         self.expected_checkpoint_direction = self.circuit.get_checkpoint_direction_from_angle(start_pos, start_angle)
         self.circuit_name = os.path.splitext(os.path.basename(image_path))[0]
