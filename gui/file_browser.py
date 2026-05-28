@@ -15,40 +15,44 @@ from gui.colors import (
 from gui.components import draw_centered_text, draw_text, shorten_text
 
 IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".svg"]
+AI_EXTENSIONS = [".npz", ".json"]
 
 
-def get_visible_files(current_dir):
+def _get_visible_entries(current_dir, allowed_extensions):
     folders = []
-    images = []
+    files = []
 
     try:
         for item in current_dir.iterdir():
             if item.is_dir():
                 folders.append(item)
-
-            elif item.is_file() and item.suffix.lower() in IMAGE_EXTENSIONS:
-                images.append(item)
-
+            elif item.is_file() and item.suffix.lower() in allowed_extensions:
+                files.append(item)
     except PermissionError:
         return [], [], "Permission denied."
-
     except FileNotFoundError:
         return [], [], "Folder not found."
 
     folders.sort(key=lambda path: path.name.lower())
-    images.sort(key=lambda path: path.name.lower())
+    files.sort(key=lambda path: path.name.lower())
 
-    return folders, images, ""
+    return folders, files, ""
 
 
-def choose_import_image(screen, clock):
+def _choose_file_from_directory(
+        screen,
+        clock,
+        root_dir,
+        allowed_extensions,
+        title,
+        empty_message,
+):
     title_font = pygame.font.SysFont(None, 40)
     text_font = pygame.font.SysFont(None, 24)
 
-    tracks_dir = Path.cwd() / "assets" / "tracks"
-    tracks_dir.mkdir(parents=True, exist_ok=True)
+    root_dir.mkdir(parents=True, exist_ok=True)
 
-    current_dir = tracks_dir
+    current_dir = root_dir
     scroll = 0
     row_height = 36
     error_message = ""
@@ -56,9 +60,9 @@ def choose_import_image(screen, clock):
     while True:
         mouse_pos = pygame.mouse.get_pos()
 
-        folders, images, read_error = get_visible_files(current_dir)
+        folders, files, read_error = _get_visible_entries(current_dir, allowed_extensions)
 
-        if read_error != "":
+        if read_error:
             error_message = read_error
 
         entries = []
@@ -69,12 +73,12 @@ def choose_import_image(screen, clock):
         for folder in folders:
             entries.append(("folder", folder, folder.name))
 
-        for image in images:
-            entries.append(("image", image, image.name))
+        for file_path in files:
+            entries.append(("file", file_path, file_path.name))
 
         screen.fill(LIGHT_BACKGROUND)
 
-        draw_centered_text(screen, title_font, "Choose a track", 40)
+        draw_centered_text(screen, title_font, title, 40)
 
         path_text = shorten_text(str(current_dir), text_font, screen.get_width() - 60)
         draw_centered_text(screen, text_font, path_text, 75, GRAY)
@@ -106,13 +110,13 @@ def choose_import_image(screen, clock):
             pygame.draw.rect(screen, color, rect, border_radius=8)
 
             prefix = "[D] " if entry_type == "folder" else ""
-            label = shorten_text(prefix + label, text_font, rect.width - 20)
-            draw_text(screen, text_font, label, rect.x + 10, rect.y + 8, text_color)
+            short_label = shorten_text(prefix + label, text_font, rect.width - 20)
+            draw_text(screen, text_font, short_label, rect.x + 10, rect.y + 8, text_color)
 
         if len(entries) == 0:
-            draw_centered_text(screen, text_font, "No image here.", 260, GRAY)
+            draw_centered_text(screen, text_font, empty_message, 260, GRAY)
 
-        if error_message != "":
+        if error_message:
             draw_centered_text(screen, text_font, error_message, screen.get_height() - 25, RED)
 
         pygame.display.flip()
@@ -131,11 +135,10 @@ def choose_import_image(screen, clock):
                     pygame.quit()
                     sys.exit()
 
-                if event.key == pygame.K_BACKSPACE:
-                    if current_dir.parent != current_dir:
-                        current_dir = current_dir.parent
-                        scroll = 0
-                        error_message = ""
+                if event.key == pygame.K_BACKSPACE and current_dir.parent != current_dir:
+                    current_dir = current_dir.parent
+                    scroll = 0
+                    error_message = ""
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4:
@@ -151,6 +154,29 @@ def choose_import_image(screen, clock):
                                 current_dir = path
                                 scroll = 0
                                 error_message = ""
-
-                            elif entry_type == "image":
+                            elif entry_type == "file":
                                 return str(path)
+
+
+def choose_import_image(screen, clock):
+    tracks_dir = Path.cwd() / "assets" / "tracks"
+    return _choose_file_from_directory(
+        screen=screen,
+        clock=clock,
+        root_dir=tracks_dir,
+        allowed_extensions=IMAGE_EXTENSIONS,
+        title="Choose a track",
+        empty_message="No image here.",
+    )
+
+
+def choose_saved_ai(screen, clock):
+    saves_dir = Path.cwd() / "saves"
+    return _choose_file_from_directory(
+        screen=screen,
+        clock=clock,
+        root_dir=saves_dir,
+        allowed_extensions=AI_EXTENSIONS,
+        title="Choose AI save",
+        empty_message="No AI save here.",
+    )

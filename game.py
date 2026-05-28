@@ -25,10 +25,13 @@ warnings.filterwarnings(
 
 
 class ChronosGame:
-    def __init__(self, ai_name="simple", load_path=None):
+    def __init__(self, screen=None, ai_name="simple", load_path=None):
         pygame.init()
 
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+        if screen is None:
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+        else:
+            self.screen = screen
         pygame.display.set_caption("Chronos Racing - Racing Simulator")
 
         self.clock = pygame.time.Clock()

@@ -1,5 +1,6 @@
-import argparse
 import warnings
+
+from training.physics_training_game import PhysicsTrainingGame
 
 warnings.filterwarnings(
     "ignore",
@@ -7,42 +8,40 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
+import pygame
+
+from config import WINDOW_HEIGHT, WINDOW_WIDTH
 from game import ChronosGame
+from gui.launch_menu import choose_launch_selection
 from training.genetic_training_game import GeneticTrainingGame
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    pygame.init()
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+    pygame.display.set_caption("Chronos Racing - Launcher")
+    clock = pygame.time.Clock()
 
-    parser.add_argument(
-        "--mode",
-        choices=["play", "train"],
-        default="play",
-        help="Mode to launch: normal gameplay or genetic training.",
-    )
+    launch_selection = choose_launch_selection(screen, clock)
 
-    parser.add_argument(
-        "--ai",
-        choices=["simple", "physics", "genetic"],
-        default="simple",
-        help="AI used in play mode.",
-    )
-
-    parser.add_argument(
-        "--load",
-        type=str,
-        default=None,
-        help="Saved AI file, e.g. time_8.42.npz. (No directory path.)",
-    )
-
-    args = parser.parse_args()
-
-    if args.mode == "train":
-        game = GeneticTrainingGame(load_path=args.load)
+    if launch_selection.mode == "train":
+        if launch_selection.ai_name == "physics":
+            game = PhysicsTrainingGame(
+                screen=screen,
+                ai_name=launch_selection.ai_name,
+                load_path=launch_selection.load_path,
+            )
+        else:
+            game = GeneticTrainingGame(
+                screen=screen,
+                ai_name=launch_selection.ai_name,
+                load_path=launch_selection.load_path,
+            )
     else:
         game = ChronosGame(
-            ai_name=args.ai,
-            load_path=args.load,
+            screen=screen,
+            ai_name=launch_selection.ai_name,
+            load_path=launch_selection.load_path,
         )
 
     game.run()
