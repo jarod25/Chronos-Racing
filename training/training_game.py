@@ -11,6 +11,7 @@ from gui.file_browser import choose_import_image
 from gui.menu import choose_circuit_mode
 from gui.start_selector import choose_import_start_position, choose_start_position
 from sensors.ray_sensor import RaySensor
+from data_manager import add_run_result
 
 
 def get_config(name, default):
@@ -86,6 +87,16 @@ class TrainingGame:
         self.finished = False
         self.winner_time = None
         self.simulation_steps = 0
+
+        self.is_generalist_run = False
+        self.first_success_logged = False
+
+        if load_path is not None:
+            filename = os.path.basename(load_path)
+
+            if filename.lower() == "generalist.npz":
+                self.is_generalist_run = True
+
 
         self.running = True
         self.setup()
@@ -296,6 +307,9 @@ class TrainingGame:
     def next_generation(self):
         scores = [car.score for car in self.cars]
         best_idx = int(np.argmax(scores))
+
+        best_score = scores[best_idx]
+        print(f"[GEN {self.generation}] Best score: {best_score:.2f}")
         if self.winner_time is not None and (self.best_time is None or self.winner_time < self.best_time):
             self.best_time = self.winner_time
             self.best_ai = self.ais[best_idx]
@@ -313,11 +327,19 @@ class TrainingGame:
 
         self.draw_debug_rays()
         best_display = "---" if self.best_time is None else f"{self.best_time:.2f}s"
+
+        debug_idx = self.get_debug_car_index()
+
+        if debug_idx is not None:
+            speed_display = f"{self.cars[debug_idx].speed_kmh:.1f} km/h"
+        else:
+            speed_display = "---"
+
         text = self.font.render(
-            f"AI: {self.ai_name} | Gen: {self.generation} | Alive: {sum(self.alive)} | Best: {best_display}",
+            f"AI: {self.ai_name} | Gen: {self.generation} | Alive: {sum(self.alive)} | Best: {best_display} | Speed: {speed_display}",
             True,
             (0, 0, 0)
-        )
+)
         self.screen.blit(text, (10, 10))
 
     def get_debug_car_index(self):

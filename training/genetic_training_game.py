@@ -2,13 +2,14 @@ import numpy as np
 
 from ai.genetic_ai import GeneticAI
 from save_manager import load_ai, replace_best_save
+from data_manager import add_run_result
 from training.training_game import TrainingGame
 
 
 class GeneticTrainingGame(TrainingGame):
 
     def create_population(self):
-        self.pop_size = 50
+        self.pop_size = 25
         if self.load_path is not None:
             base_ai = load_ai(GeneticAI, self.load_path)
             ais = [base_ai.copy() for _ in range(self.pop_size)]
@@ -28,15 +29,39 @@ class GeneticTrainingGame(TrainingGame):
         return GeneticAI.to_car_action(output)
 
     def on_new_best(self, best_ai):
-        new_filename = replace_best_save(
-            ai=best_ai,
-            ai_name=self.ai_name,
-            circuit_name=self.circuit_name,
-            time_s=self.best_time,
-            extension="npz",
-            old_filename=self.best_save_filename,
-        )
-        self.best_save_filename = new_filename
+
+        if self.is_generalist_run:
+
+            replace_best_save(
+                ai=best_ai,
+                new_filename="generalist.npz",
+            )
+
+            print("[GENERALIST] Updated generalist.npz")
+
+        else:
+
+            new_filename = replace_best_save(
+                ai=best_ai,
+                ai_name=self.ai_name,
+                circuit_name=self.circuit_name,
+                time_s=self.best_time,
+                extension="npz",
+                old_filename=self.best_save_filename,
+            )
+
+            self.best_save_filename = new_filename
+
+        if not self.first_success_logged:
+
+            add_run_result(
+                ia_name=self.best_save_filename,
+                circuit_name=self.circuit_name,
+                time_s=self.best_time,
+                generation=self.generation,
+            )
+
+            self.first_success_logged = True
 
     def evolve(self, scores):
         sorted_idx = np.argsort(scores)[::-1]

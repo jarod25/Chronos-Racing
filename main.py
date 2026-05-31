@@ -1,4 +1,6 @@
 import warnings
+import sys
+from graph import run_graph_mode
 
 warnings.filterwarnings(
     "ignore",
@@ -16,6 +18,11 @@ from training.physics_training_game import PhysicsTrainingGame
 
 
 def main():
+    
+    if "--graph" in sys.argv:
+        run_graph_mode()
+        return
+    
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
     pygame.display.set_caption("Chronos Racing - Launcher")
