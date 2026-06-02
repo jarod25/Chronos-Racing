@@ -1,0 +1,11 @@
+#,ia_name,circuit_name,time,generation
+
+2,ia_Quatar,Qatar - Lusail,64.78,30
+3,generalist_ABCDE,Italy - Monza,46.07,22
+4,generalist_ABCDE,Australia - Melbourne,47.35,16
+5,generalist_ABCDE,Brazil - Sao Paulo,64.72,4
+6,generalist_ABCDE,Hungary - Budapest,55.73,1
+7,generalist_ABCDE,Qatar - Lusail,63.88,2
+8,generalist_5_circuits,Monaco - Monaco,54.98,1
+9,generalist_3_circuits,Monaco - Monaco,54.02,12
+10,ai_fresh_Monaco,Monaco - Monaco,54.47,59

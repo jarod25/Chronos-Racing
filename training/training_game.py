@@ -158,6 +158,7 @@ class TrainingGame:
         self.cars = [Car(self.car_start_x, self.car_start_y, angle=self.car_start_angle) for _ in range(self.pop_size)]
         self.alive = [True] * self.pop_size
         for car in self.cars:
+            car.speed_kmh = 20
             start_checkpoint = self.circuit.get_checkpoint(car)
             car.score = 0
             car.start_checkpoint = start_checkpoint
@@ -195,6 +196,11 @@ class TrainingGame:
             car.frames_since_spawn += 1
             action = self.compute_action(self.ais[i], car)
             car.update(action)
+
+            if car.speed_kmh < 20:
+                car.death_reason = "too slow"
+                self.alive[i] = False
+                continue
 
             car.trail.append(car.pos.copy())
 
@@ -332,7 +338,7 @@ class TrainingGame:
         self.reset_cars()
 
     def draw(self):
-        self.circuit.draw(screen=self.screen, draw_checkpoints=False)
+        self.circuit.draw(screen=self.screen, draw_checkpoints=True)
         for i, car in enumerate(self.cars):
             color = (255, 255, 255) if self.alive[i] else (70, 70, 70)
             p = self.circuit.track_to_screen(car.pos)

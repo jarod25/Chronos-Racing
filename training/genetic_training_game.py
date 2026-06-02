@@ -9,7 +9,7 @@ from training.training_game import TrainingGame
 class GeneticTrainingGame(TrainingGame):
 
     def create_population(self):
-        self.pop_size = 25
+        self.pop_size = 30
         if self.load_path is not None:
             base_ai = load_ai(GeneticAI, self.load_path)
             ais = [base_ai.copy() for _ in range(self.pop_size)]
@@ -60,6 +60,6 @@ class GeneticTrainingGame(TrainingGame):
         while len(new_ais) < self.pop_size:
             parent = self.ais[np.random.choice(parents)]
             child = parent.copy()
-            child.mutate(rate=0.05)
+            child.mutate(rate=0.03)
             new_ais.append(child)
         self.ais = new_ais

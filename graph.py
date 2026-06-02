@@ -7,11 +7,36 @@ from matplotlib.ticker import MultipleLocator
 def show_bar_graph(df, x_column, y_column):
     plt.figure(figsize=(10, 6))
 
-    plt.bar(df[x_column], df[y_column], color="#CB1200")
+    bars = plt.bar(
+        df[x_column],
+        df[y_column],
+        color="#CB1200"
+    )
+
+    for bar in bars:
+        height = bar.get_height()
+
+        plt.annotate(
+            f"{height:}",
+            (
+                bar.get_x() + bar.get_width() / 2,
+                height
+            ),
+            textcoords="offset points",
+            xytext=(0, 5),
+            ha="center"
+        )
 
     plt.xlabel(x_column)
     plt.ylabel(y_column)
-    plt.title(f"{y_column} per {x_column}")
+    plt.title(f"{y_column} per ai on the Monaco circuit")
+
+    plt.grid(
+        axis="y",
+        linestyle="-",
+        linewidth=0.5,
+        alpha=0.4
+    )
 
     plt.tight_layout()
     plt.show()
@@ -54,6 +79,14 @@ def show_line_graph(df, x_column, y_column):
     plt.show()
 
 def run_graph_mode():
+    plt.rcParams.update({
+        "font.size": 10,
+        "axes.titlesize": 18,
+        "axes.labelsize": 18,
+        "xtick.labelsize": 16,
+        "ytick.labelsize": 16,
+    })
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--graph", action="store_true")
