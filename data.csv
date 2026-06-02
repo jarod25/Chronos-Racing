@@ -1,4 +1,13 @@
 #,ia_name,circuit_name,time,generation
-1,generalist.npz,Italy - Monza,45.3,1
-2,genetic_brazil_-_sao_paulo_63.45.npz,Brazil - Sao Paulo,63.45,1
-3,genetic_italy_-_monza_46.00.npz,Italy - Monza,46.0,10
+
+2,genetic,Italy - Monza,57.6,17
+3,genetic_italy_-_monza_45.30.npz,Italy - Monza,55.3,18
+4,genetic_italy_-_monza_45.30.npz,Italy - Monza,51.8,19
+5,genetic_italy_-_monza_45.30.npz,Italy - Monza,50.2,20
+6,genetic_italy_-_monza_45.30.npz,Italy - Monza,50.6,21
+7,genetic_italy_-_monza_45.30.npz,Italy - Monza,48,22
+8,genetic_italy_-_monza_45.30.npz,Italy - Monza,46.4,23
+9,genetic_italy_-_monza_45.30.npz,Italy - Monza,46.1,24
+10,genetic_italy_-_monza_44.87.npz,Italy - Monza,45.87,25
+11,genetic_italy_-_monza_44.87.npz,Italy - Monza,44.85,26
+12,genetic_italy_-_monza_44.85.npz,Italy - Monza,44.85,27

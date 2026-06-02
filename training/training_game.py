@@ -170,6 +170,7 @@ class TrainingGame:
             car.death_reason = None
             car.stuck_frames = 0
             car.last_progress_pos = car.pos.copy()
+            car.trail = [car.pos.copy()]
         self.finished = False
         self.winner_time = None
         self.simulation_steps = 0
@@ -194,6 +195,11 @@ class TrainingGame:
             car.frames_since_spawn += 1
             action = self.compute_action(self.ais[i], car)
             car.update(action)
+
+            car.trail.append(car.pos.copy())
+
+            if len(car.trail) > 300:
+                car.trail.pop(0)
 
             if self.simulation_steps > STUCK_GRACE_FRAMES:
                 progress = float(np.linalg.norm(car.pos - car.last_progress_pos))
@@ -304,6 +310,13 @@ class TrainingGame:
             self.finished = True
             self.winner_time = self.simulation_steps / self.fps
 
+            add_run_result(
+                ia_name=self.best_save_filename or self.ai_name,
+                circuit_name=self.circuit_name,
+                time_s=self.winner_time,
+                generation=self.generation,
+            )
+
     def next_generation(self):
         scores = [car.score for car in self.cars]
         best_idx = int(np.argmax(scores))
@@ -319,7 +332,7 @@ class TrainingGame:
         self.reset_cars()
 
     def draw(self):
-        self.circuit.draw(screen=self.screen, draw_checkpoints=True)
+        self.circuit.draw(screen=self.screen, draw_checkpoints=False)
         for i, car in enumerate(self.cars):
             color = (255, 255, 255) if self.alive[i] else (70, 70, 70)
             p = self.circuit.track_to_screen(car.pos)
@@ -329,7 +342,24 @@ class TrainingGame:
         best_display = "---" if self.best_time is None else f"{self.best_time:.2f}s"
 
         debug_idx = self.get_debug_car_index()
+        """
+        if debug_idx is not None:
+            car = self.cars[debug_idx]
 
+            if len(car.trail) > 1:
+                points = [
+                    self.circuit.track_to_screen(pos)
+                    for pos in car.trail
+                ]
+
+                pygame.draw.lines(
+                    self.screen,
+                    (255, 0, 0),
+                    False,
+                    points,
+                    3
+                )
+        """
         if debug_idx is not None:
             speed_display = f"{self.cars[debug_idx].speed_kmh:.1f} km/h"
         else:

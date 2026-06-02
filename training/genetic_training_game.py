@@ -52,17 +52,6 @@ class GeneticTrainingGame(TrainingGame):
 
             self.best_save_filename = new_filename
 
-        if not self.first_success_logged:
-
-            add_run_result(
-                ia_name=self.best_save_filename,
-                circuit_name=self.circuit_name,
-                time_s=self.best_time,
-                generation=self.generation,
-            )
-
-            self.first_success_logged = True
-
     def evolve(self, scores):
         sorted_idx = np.argsort(scores)[::-1]
         parent_count = min(20, len(sorted_idx))
