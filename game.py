@@ -11,8 +11,8 @@ from circuit.ellipse_circuit import EllipseCircuit
 from circuit.imported_circuit import ImportedCircuit
 from config import *
 from gui.file_browser import choose_import_image
-from gui.menu import choose_circuit_mode
 from gui.hud import build_toggle_button_rects
+from gui.menu import choose_circuit_mode
 from gui.renderer import draw_game
 from gui.start_selector import choose_start_position, choose_import_start_position
 from save_manager import load_best_time_from_save
@@ -305,10 +305,8 @@ class ChronosGame:
             self.crash_time = pygame.time.get_ticks() / 1000.0
             print("Collision: car is off track.")
 
-
     def draw(self):
         self.update_layout()
-
 
         draw_game(
             screen=self.screen,

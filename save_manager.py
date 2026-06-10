@@ -7,6 +7,7 @@ import numpy as np
 
 SAVE_DIR = "saves"
 
+
 def _coerce_lap_time(value):
     try:
         lap_time = float(value)
@@ -46,7 +47,6 @@ def load_best_time_from_save(load_path):
             return lap_time
 
     return None
-
 
 
 def _sanitize_name(value, fallback="unknown"):

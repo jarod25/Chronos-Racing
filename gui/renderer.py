@@ -3,6 +3,7 @@ import pygame
 from gui.colors import BLACK, RED, WHITE
 from gui.hud import draw_hud
 
+
 def draw_game(
         screen,
         circuit,

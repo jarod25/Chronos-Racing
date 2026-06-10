@@ -1,6 +1,7 @@
 import argparse
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.ticker import MultipleLocator
 
 
@@ -41,6 +42,7 @@ def show_bar_graph(df, x_column, y_column):
     plt.tight_layout()
     plt.show()
 
+
 def show_line_graph(df, x_column, y_column):
     plt.figure(figsize=(10, 6))
 
@@ -67,8 +69,8 @@ def show_line_graph(df, x_column, y_column):
     plt.ylabel(y_column)
     plt.title(f"{y_column} evolution by {x_column}")
 
-    #plt.ylabel("time (s)")
-    #plt.title("time per turn - Monza Circuit")
+    # plt.ylabel("time (s)")
+    # plt.title("time per turn - Monza Circuit")
 
     ax = plt.gca()
     ax.xaxis.set_major_locator(MultipleLocator(1))
@@ -77,6 +79,7 @@ def show_line_graph(df, x_column, y_column):
 
     plt.tight_layout()
     plt.show()
+
 
 def run_graph_mode():
     plt.rcParams.update({

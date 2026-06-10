@@ -7,13 +7,13 @@ from car import Car
 from circuit.ellipse_circuit import EllipseCircuit
 from circuit.imported_circuit import ImportedCircuit
 from config import *
+from data_manager import add_run_result
 from gui.file_browser import choose_import_image
+from gui.hud import build_toggle_button_rects, draw_hud
 from gui.menu import choose_circuit_mode
 from gui.start_selector import choose_import_start_position, choose_start_position
-from gui.hud import build_toggle_button_rects, draw_hud
 from save_manager import load_best_time_from_save
 from sensors.ray_sensor import RaySensor
-from data_manager import add_run_result
 
 
 def get_config(name, default):
@@ -106,7 +106,6 @@ class TrainingGame:
 
             if filename.lower() == "generalist.npz":
                 self.is_generalist_run = True
-
 
         self.running = True
         self.setup()

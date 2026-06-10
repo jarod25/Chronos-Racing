@@ -61,20 +61,20 @@ def draw_toggle_button(screen, font, button_rect, label, enabled):
 
 
 def draw_hud(
-    screen,
-    font,
-    button_font,
-    ai_name,
-    speed_kmh,
-    current_lap_time,
-    last_lap_time,
-    best_lap_time,
-    show_rays,
-    show_checkpoints,
-    raycasts_button_rect,
-    checkpoints_button_rect,
-    generation=None,
-    lap_delta=None,
+        screen,
+        font,
+        button_font,
+        ai_name,
+        speed_kmh,
+        current_lap_time,
+        last_lap_time,
+        best_lap_time,
+        show_rays,
+        show_checkpoints,
+        raycasts_button_rect,
+        checkpoints_button_rect,
+        generation=None,
+        lap_delta=None,
 ):
     draw_toggle_button(screen, button_font, raycasts_button_rect, "Raycasts", show_rays)
     draw_toggle_button(screen, button_font, checkpoints_button_rect, "Checkpoints", show_checkpoints)

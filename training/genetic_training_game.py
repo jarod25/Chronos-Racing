@@ -2,7 +2,6 @@ import numpy as np
 
 from ai.genetic_ai import GeneticAI
 from save_manager import load_ai, replace_best_save
-from data_manager import add_run_result
 from training.training_game import TrainingGame
 
 

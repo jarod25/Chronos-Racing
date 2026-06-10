@@ -19,6 +19,7 @@ def ensure_csv_exists():
             "gen_number"
         ])
 
+
 def get_next_id():
     ensure_csv_exists()
 
@@ -26,6 +27,7 @@ def get_next_id():
         rows = list(csv.reader(f))
 
     return len(rows)
+
 
 def add_run_result(
         ia_name,
