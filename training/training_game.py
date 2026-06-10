@@ -10,6 +10,7 @@ from config import *
 from gui.file_browser import choose_import_image
 from gui.menu import choose_circuit_mode
 from gui.start_selector import choose_import_start_position, choose_start_position
+from gui.hud import build_toggle_button_rects, draw_hud
 from sensors.ray_sensor import RaySensor
 from data_manager import add_run_result
 
@@ -56,13 +57,18 @@ class TrainingGame:
         self.pop_size = get_config("POP_SIZE", 20)
 
         if screen is None:
-            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
         else:
             self.screen = screen
         pygame.display.set_caption(f"Chronos Racing - {self.ai_name.title()} Training")
 
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, 36)
+        self.font = pygame.font.SysFont(None, 28)
+        self.hud_font = pygame.font.SysFont(None, 28)
+        self.button_font = pygame.font.SysFont(None, 28)
+        self.raycasts_button_rect, self.checkpoints_button_rect = build_toggle_button_rects()
+        self.show_rays = True
+        self.show_checkpoints = True
 
         self.sensor = RaySensor(
             ray_count=get_config("RAY_COUNT", 21),
@@ -76,6 +82,7 @@ class TrainingGame:
         self.circuit_name = None
 
         self.best_time = None
+        self.last_lap_time = None
         self.best_ai = None
         self.generation = 1
 
@@ -181,6 +188,14 @@ class TrainingGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+                    self.update_layout()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self.raycasts_button_rect.collidepoint(event.pos):
+                        self.show_rays = not self.show_rays
+                    elif self.checkpoints_button_rect.collidepoint(event.pos):
+                        self.show_checkpoints = not self.show_checkpoints
             self.update()
             self.draw()
             pygame.display.flip()
@@ -315,6 +330,7 @@ class TrainingGame:
         if crossed_forward:
             self.finished = True
             self.winner_time = self.simulation_steps / self.fps
+            self.last_lap_time = self.winner_time
 
             add_run_result(
                 ia_name=self.best_save_filename or self.ai_name,
@@ -322,6 +338,15 @@ class TrainingGame:
                 time_s=self.winner_time,
                 generation=self.generation,
             )
+
+    def update_layout(self):
+        self.track_view_offset = (
+            (self.screen.get_width() - self.track_view_size[0]) // 2,
+            get_config("TRACK_OFFSET_Y", 0),
+        )
+        if self.circuit is not None:
+            self.circuit.offset_x = self.track_view_offset[0]
+            self.circuit.offset_y = self.track_view_offset[1]
 
     def next_generation(self):
         scores = [car.score for car in self.cars]
@@ -338,14 +363,15 @@ class TrainingGame:
         self.reset_cars()
 
     def draw(self):
-        self.circuit.draw(screen=self.screen, draw_checkpoints=True)
+        self.update_layout()
+        self.circuit.draw(screen=self.screen, draw_checkpoints=self.show_checkpoints)
         for i, car in enumerate(self.cars):
             color = (255, 255, 255) if self.alive[i] else (70, 70, 70)
             p = self.circuit.track_to_screen(car.pos)
             pygame.draw.circle(self.screen, color, (int(p[0]), int(p[1])), 4)
 
-        self.draw_debug_rays()
-        best_display = "---" if self.best_time is None else f"{self.best_time:.2f}s"
+        if self.show_rays:
+            self.draw_debug_rays()
 
         debug_idx = self.get_debug_car_index()
         """
@@ -366,17 +392,22 @@ class TrainingGame:
                     3
                 )
         """
-        if debug_idx is not None:
-            speed_display = f"{self.cars[debug_idx].speed_kmh:.1f} km/h"
-        else:
-            speed_display = "---"
-
-        text = self.font.render(
-            f"AI: {self.ai_name} | Gen: {self.generation} | Alive: {sum(self.alive)} | Best: {best_display} | Speed: {speed_display}",
-            True,
-            (0, 0, 0)
-)
-        self.screen.blit(text, (10, 10))
+        speed_kmh = self.cars[debug_idx].speed_kmh if debug_idx is not None else None
+        draw_hud(
+            screen=self.screen,
+            font=self.hud_font,
+            button_font=self.button_font,
+            ai_name=self.ai_name,
+            generation=self.generation,
+            speed_kmh=speed_kmh,
+            current_lap_time=self.simulation_steps / self.fps,
+            last_lap_time=self.last_lap_time,
+            best_lap_time=self.best_time,
+            show_rays=self.show_rays,
+            show_checkpoints=self.show_checkpoints,
+            raycasts_button_rect=self.raycasts_button_rect,
+            checkpoints_button_rect=self.checkpoints_button_rect,
+        )
 
     def get_debug_car_index(self):
         alive_indexes = [i for i, is_alive in enumerate(self.alive) if is_alive]

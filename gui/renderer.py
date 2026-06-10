@@ -1,8 +1,7 @@
 import pygame
 
 from gui.colors import BLACK, RED, WHITE
-from gui.components import draw_button
-
+from gui.hud import draw_hud
 
 def draw_game(
         screen,
@@ -11,11 +10,17 @@ def draw_game(
         crashed,
         font,
         button_font,
+        raycasts_button_rect,
         checkpoints_button_rect,
+        show_rays,
         show_checkpoints,
         sensor=None,
         draw_rays=False,
-        hud_text=None,
+        ai_name=None,
+        speed_kmh=None,
+        current_lap_time=None,
+        last_lap_time=None,
+        best_lap_time=None,
 ):
     circuit.draw(screen, draw_checkpoints=show_checkpoints)
 
@@ -23,15 +28,20 @@ def draw_game(
         sensor.draw(screen, circuit, car)
 
     draw_car(screen, circuit, car)
-    draw_checkpoints_button(
+    draw_hud(
         screen=screen,
         font=button_font,
-        button_rect=checkpoints_button_rect,
+        button_font=button_font,
+        ai_name=ai_name,
+        speed_kmh=speed_kmh,
+        current_lap_time=current_lap_time,
+        last_lap_time=last_lap_time,
+        best_lap_time=best_lap_time,
+        show_rays=show_rays,
         show_checkpoints=show_checkpoints,
+        raycasts_button_rect=raycasts_button_rect,
+        checkpoints_button_rect=checkpoints_button_rect,
     )
-
-    if hud_text:
-        draw_hud_text(screen, hud_text)
 
     if crashed:
         draw_crash_text(screen, font)
@@ -55,22 +65,7 @@ def draw_car(screen, circuit, car):
     )
 
 
-def draw_hud_text(screen, text_value):
-    font = pygame.font.SysFont(None, 28)
-    margin = 12
-    text = font.render(text_value, True, BLACK)
-    rect = text.get_rect()
-    rect.topright = (screen.get_width() - margin, margin)
-    screen.blit(text, rect)
-
-
 def draw_crash_text(screen, font):
     text = font.render("CRASH", True, RED)
     rect = text.get_rect(center=(screen.get_width() // 2, 45))
     screen.blit(text, rect)
-
-
-def draw_checkpoints_button(screen, font, button_rect, show_checkpoints):
-    mouse_pos = pygame.mouse.get_pos()
-    label = "Show checkpoints: YES" if show_checkpoints else "Show checkpoints: NO"
-    draw_button(screen, font, button_rect, label, mouse_pos)
