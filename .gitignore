@@ -20,3 +20,12 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+# Ignore local track images but keep the examples
+assets/tracks/*
+!assets/tracks/examples/
+!assets/tracks/examples/**
+
+# Ignore saves, but keep the directory
+saves/*
+!saves/.gitkeep
