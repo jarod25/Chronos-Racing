@@ -11,6 +11,7 @@ from gui.file_browser import choose_import_image
 from gui.menu import choose_circuit_mode
 from gui.start_selector import choose_import_start_position, choose_start_position
 from gui.hud import build_toggle_button_rects, draw_hud
+from save_manager import load_best_time_from_save
 from sensors.ray_sensor import RaySensor
 from data_manager import add_run_result
 
@@ -81,8 +82,10 @@ class TrainingGame:
         self.circuit = None
         self.circuit_name = None
 
-        self.best_time = None
+        self.best_time = load_best_time_from_save(load_path)
+        self.previous_lap_time = None
         self.last_lap_time = None
+        self.lap_delta = None
         self.best_ai = None
         self.generation = 1
 
@@ -330,6 +333,11 @@ class TrainingGame:
         if crossed_forward:
             self.finished = True
             self.winner_time = self.simulation_steps / self.fps
+            if self.last_lap_time is not None:
+                self.lap_delta = self.winner_time - self.last_lap_time
+            else:
+                self.lap_delta = None
+            self.previous_lap_time = self.last_lap_time
             self.last_lap_time = self.winner_time
 
             add_run_result(
@@ -403,6 +411,7 @@ class TrainingGame:
             current_lap_time=self.simulation_steps / self.fps,
             last_lap_time=self.last_lap_time,
             best_lap_time=self.best_time,
+            lap_delta=self.lap_delta,
             show_rays=self.show_rays,
             show_checkpoints=self.show_checkpoints,
             raycasts_button_rect=self.raycasts_button_rect,

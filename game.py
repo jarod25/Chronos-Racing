@@ -15,6 +15,7 @@ from gui.menu import choose_circuit_mode
 from gui.hud import build_toggle_button_rects
 from gui.renderer import draw_game
 from gui.start_selector import choose_start_position, choose_import_start_position
+from save_manager import load_best_time_from_save
 from sensors.ray_sensor import RaySensor
 
 
@@ -57,6 +58,8 @@ class ChronosGame:
 
         self.running = True
         self.crashed = False
+        self.crash_time = None
+        self.auto_reset_delay = 2
 
         self.start_pos = None
         self.start_angle = 0.0
@@ -66,8 +69,10 @@ class ChronosGame:
         self.generation = 1
         self.lap_start_time = 0.0
         self.current_lap_time = 0.0
-        self.best_lap_time = None
+        self.best_lap_time = load_best_time_from_save(load_path)
+        self.previous_lap_time = None
         self.last_lap_time = None
+        self.lap_delta = None
         self.best_save_path = None
         self.min_valid_lap_time = 2.0
 
@@ -205,6 +210,11 @@ class ChronosGame:
             lap_time = self.current_lap_time
             if lap_time >= self.min_valid_lap_time:
                 self.generation += 1
+                if self.last_lap_time is not None:
+                    self.lap_delta = lap_time - self.last_lap_time
+                else:
+                    self.lap_delta = None
+                self.previous_lap_time = self.last_lap_time
                 self.last_lap_time = lap_time
                 self._save_best_if_needed(lap_time)
                 if self.best_lap_time is None or lap_time < self.best_lap_time:
@@ -254,7 +264,10 @@ class ChronosGame:
         self.car.prev_pos = self.start_pos.copy()
         self.car.angle = float(self.start_angle)
         self.car.speed_kmh = 0.0
+        self.car.checkpoint_passed = False
+        self.car.lap_completed = False
         self.crashed = False
+        self.crash_time = None
         self.has_left_start_zone = False
         self.was_in_start_zone = True
         self.lap_start_time = pygame.time.get_ticks() / 1000.0
@@ -272,6 +285,10 @@ class ChronosGame:
 
     def update(self):
         if self.crashed:
+            if self.crash_time is not None:
+                now = pygame.time.get_ticks() / 1000.0
+                if now - self.crash_time >= self.auto_reset_delay:
+                    self.reset_car()
             return
 
         action = self.ai_controller.get_action(
@@ -285,6 +302,7 @@ class ChronosGame:
 
         if not self.circuit.is_on_track(self.car.pos):
             self.crashed = True
+            self.crash_time = pygame.time.get_ticks() / 1000.0
             print("Collision: car is off track.")
 
 
@@ -310,6 +328,7 @@ class ChronosGame:
             current_lap_time=self.current_lap_time,
             last_lap_time=self.last_lap_time,
             best_lap_time=self.best_lap_time,
+            lap_delta=self.lap_delta,
         )
 
     def quit(self):

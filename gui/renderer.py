@@ -21,6 +21,7 @@ def draw_game(
         current_lap_time=None,
         last_lap_time=None,
         best_lap_time=None,
+        lap_delta=None,
 ):
     circuit.draw(screen, draw_checkpoints=show_checkpoints)
 
@@ -37,6 +38,7 @@ def draw_game(
         current_lap_time=current_lap_time,
         last_lap_time=last_lap_time,
         best_lap_time=best_lap_time,
+        lap_delta=lap_delta,
         show_rays=show_rays,
         show_checkpoints=show_checkpoints,
         raycasts_button_rect=raycasts_button_rect,

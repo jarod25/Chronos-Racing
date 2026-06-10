@@ -32,11 +32,11 @@ def format_lap_time(seconds):
     return f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
 
 
-def format_delta(last_lap_time, best_lap_time):
-    if last_lap_time is None or best_lap_time is None:
+def format_delta(lap_delta):
+    if lap_delta is None:
         return "Delta: ---"
     try:
-        delta = float(last_lap_time) - float(best_lap_time)
+        delta = float(lap_delta)
     except (TypeError, ValueError):
         return "Delta: ---"
     if not math.isfinite(delta):
@@ -74,6 +74,7 @@ def draw_hud(
     raycasts_button_rect,
     checkpoints_button_rect,
     generation=None,
+    lap_delta=None,
 ):
     draw_toggle_button(screen, button_font, raycasts_button_rect, "Raycasts", show_rays)
     draw_toggle_button(screen, button_font, checkpoints_button_rect, "Checkpoints", show_checkpoints)
@@ -97,7 +98,7 @@ def draw_hud(
     lap_text = font.render(
         f"Last: {format_lap_time(last_lap_time)} | "
         f"Best: {format_lap_time(best_lap_time)} | "
-        f"{format_delta(last_lap_time, best_lap_time)}",
+        f"{format_delta(lap_delta)}",
         True,
         BLACK,
     )

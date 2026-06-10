@@ -1,9 +1,52 @@
+import json
+import math
 import os
 import re
 
 import numpy as np
 
 SAVE_DIR = "saves"
+
+def _coerce_lap_time(value):
+    try:
+        lap_time = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(lap_time) or lap_time <= 0:
+        return None
+    return lap_time
+
+
+def _path_for_save(filename):
+    return filename if os.path.isabs(filename) else os.path.join(SAVE_DIR, filename)
+
+
+def load_best_time_from_save(load_path):
+    if not load_path:
+        return None
+
+    path = _path_for_save(load_path)
+    basename = os.path.basename(str(load_path))
+
+    if str(path).lower().endswith(".json") and os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            data = None
+
+        if isinstance(data, dict):
+            lap_time = _coerce_lap_time(data.get("best_lap_time"))
+            if lap_time is not None:
+                return lap_time
+
+    for match in re.finditer(r"(?<!\d)(\d+[.,]\d+)(?!\d)", basename):
+        lap_time = _coerce_lap_time(match.group(1).replace(",", "."))
+        if lap_time is not None:
+            return lap_time
+
+    return None
+
 
 
 def _sanitize_name(value, fallback="unknown"):
@@ -41,7 +84,7 @@ def save_ai(ai, filename):
 
 
 def load_ai(ai_class, filename):
-    path = filename if os.path.isabs(filename) else os.path.join(SAVE_DIR, filename)
+    path = _path_for_save(filename)
 
     data = np.load(path)
 
