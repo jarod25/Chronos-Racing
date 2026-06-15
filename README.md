@@ -6,6 +6,12 @@ The goal is to simulate a car on a 2D track and test different AI driving approa
 
 This project was made as an end-of-year school project.
 
+## Video demonstration
+
+A complete demonstration of the project, including the genetic AI training process and its performance on different racing circuits, is available on YouTube:
+
+[**Watch Chronos Racing — A Genetic AI Learning to Drive on Racing Circuits**](https://www.youtube.com/watch?v=MWYh4yesfQs)
+
 ## Authors
 
 * [KOHLER Jarod](https://github.com/jarod25)
@@ -149,9 +155,54 @@ Run the project (if you have installed the dependencies):
 
 ## Graph mode
 
-To launch graph mode:
+Graph mode displays the training results stored in `data.csv`.
 
-`python main.py --graph`
+A graph type and the columns used for the X and Y axes must be specified.
+
+### Bar graph
+
+```bash
+python main.py --graph --bar --x ia_name --y time
+```
+
+Example with circuit filtering:
+
+```bash
+python main.py --graph --bar --x ia_name --y time --sort "Italy - Monza"
+```
+
+### Line graph
+
+```bash
+python main.py --graph --line --x generation --y time
+```
+
+Example with circuit filtering:
+
+```bash
+python main.py --graph --line --x generation --y time --sort "Italy - Monza"
+```
+
+### Arguments
+
+| Argument         | Description                            |
+| ---------------- | -------------------------------------- |
+| `--graph`        | Enables graph mode                     |
+| `--bar`          | Displays a bar graph                   |
+| `--line`         | Displays a line graph                  |
+| `--x COLUMN`     | Selects the column used for the X axis |
+| `--y COLUMN`     | Selects the column used for the Y axis |
+| `--sort CIRCUIT` | Filters the results by circuit name    |
+
+Either `--bar` or `--line` must be used.
+
+Available data columns include:
+
+* `ia_name`
+* `circuit_name`
+* `time`
+* `generation`
+
 
 ## Project structure
 
